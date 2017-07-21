@@ -13,10 +13,6 @@ def read_vector(filepath):
         output[word_vector[0]] = list(float(vt) for vt in word_vector[1:])
     return output
 
-def read_file(file_path):
-    with open(file_path, encoding='utf-8') as file:
-        return file.read()
-
 def get_cossim(vec1, vec2):
     import numpy as np
     from numpy import linalg as la

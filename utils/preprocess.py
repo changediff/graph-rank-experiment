@@ -1,8 +1,8 @@
 # coding:utf-8
 
-def read_file(abstr_path, file_name, title=False):
+def read_file(path, title=False):
     """abstr_path: ./data/ file_name"""
-    with open(abstr_path + file_name, 'r', encoding='utf8') as f:
+    with open(path, encoding='utf8') as f:
         if title:
             file_text = f.readline()
         else:

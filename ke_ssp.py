@@ -377,3 +377,5 @@ def dataset_train(dataset, alpha=0.5, topn=5, ngrams=2, vector_type='ours'):
     return 0
 
 dataset_train('kdd', alpha=0, topn=4, vector_type='ours')
+
+# 有虫要捉，暂缓，有限修改模型。
