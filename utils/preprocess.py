@@ -69,7 +69,7 @@ def get_phrases(pr, graph, abstr_path, file_name, ng=2):
 
     from nltk import word_tokenize, ngrams, pos_tag
 
-    text = rm_tags(read_file(abstr_path, file_name))
+    text = rm_tags(read_file(abstr_path+file_name))
     tokens = word_tokenize(text.lower())
     edges = graph.edge
     phrases = set()

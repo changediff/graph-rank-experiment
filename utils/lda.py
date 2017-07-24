@@ -6,7 +6,7 @@ from gensim import corpora, models
 def lda_train(abstr_path, file_names, num_topics=20):
     texts = []
     for file_name in file_names:
-        file_text = read_file(abstr_path, file_name)
+        file_text = read_file(abstr_path+file_name)
         tagged_tokens = get_tagged_tokens(file_text)
         filtered_text = get_filtered_text(tagged_tokens)
         texts.append(filtered_text.split())

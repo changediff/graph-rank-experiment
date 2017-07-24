@@ -215,7 +215,7 @@ def create_B(node_list, gold):
 
 def train_doc(abstr_path, file_name, alpha=0.5, vector_type = 'ours',
               d=0.85, step_size=0.1, epsilon=0.001, max_iter=1000):
-    file_text = read_file(abstr_path, file_name)
+    file_text = read_file(abstr_path + file_name)
     tagged_tokens = get_tagged_tokens(file_text)
     filtered_text = get_filtered_text(tagged_tokens)
     edge_features = get_edge_freq(filtered_text) # 边特征只有1个共现次数
@@ -237,7 +237,7 @@ def train_doc(abstr_path, file_name, alpha=0.5, vector_type = 'ours',
     node_weight = calc_node_weight(node_features, phi)
     debug('node_weight = ' + str(node_weight))
     # 使用gold构建B矩阵
-    gold = read_file(abstr_path+'../gold/', file_name)
+    gold = read_file(abstr_path + '../gold/' + file_name)
     B = create_B(node_list, abstr_path)
 
     # 使用标题构建B矩阵，效果一般
@@ -263,7 +263,7 @@ def train_doc(abstr_path, file_name, alpha=0.5, vector_type = 'ours',
 
     e = 1
     iteration = 0
-    while e > epsilon and iteration < max_iter: #and all(a >= 0 for a in phi) and all(b >= 0 for b in omega) and all(c >= 0 for c in pi):
+    while e > epsilon and iteration < max_iter and all(a >= 0 for a in phi) and all(b >= 0 for b in omega) and all(c >= 0 for c in pi):
         g_pi = calcGradientPi(pi3, P, B, mu, alpha, d)
         debug('g_pi: ' + str(g_pi))
         g_omega = calcGradientOmega(edge_features, node_list, omega, pi3, pi, alpha, d)
@@ -311,13 +311,13 @@ def dataset_train(dataset, alpha=0.5, topn=5, ngrams=2, vector_type='ours'):
         abstr_path = './data/embedding/KDD/abstracts/'
         out_path = './result/embedding/'
         gold_path = './data/embedding/KDD/gold/'
-        file_names = read_file('./data/embedding/', 'KDD_filelist').split(',')
+        file_names = read_file('./data/embedding/KDD_filelist').split(',')
         info('kdd start')
     elif dataset == 'www':
         abstr_path = './data/embedding/WWW/abstracts/'
         out_path = './result/'
         gold_path = './data/embedding/WWW/gold/'
-        file_names = read_file('./data/embedding/', 'WWW_filelist').split(',')
+        file_names = read_file('./data/embedding/WWW_filelist').split(',')
         info('www start')
     else:
         warn('wrong dataset name')
@@ -338,7 +338,7 @@ def dataset_train(dataset, alpha=0.5, topn=5, ngrams=2, vector_type='ours'):
         info(pi)
         word_score = {node_list[i]:pi[i] for i in range(len(pi))}
         # top_n = top_n_words(pi, node_list, n=10)
-        gold = read_file(gold_path, file_name)
+        gold = read_file(gold_path + file_name)
         keyphrases = get_phrases(word_score, graph, abstr_path, file_name, ng=ngrams)
         top_phrases = []
         for phrase in keyphrases:
@@ -370,12 +370,12 @@ def dataset_train(dataset, alpha=0.5, topn=5, ngrams=2, vector_type='ours'):
         to_file = file_name + ',omega,' + str(omega)[1:-1] + ',phi,' + str(phi)[1:-1] + \
                   ',count precision recall f1 iter,' + str(count_micro) +',' + str(prcs_micro) + \
                   ',' + str(recall_micro) + ',' + str(f1) + ',' + str(iteration) + ',' + str(top_phrases) + '\n'
-        with open(out_path + 'train-' + dataset + str(alpha) + vector_type +str(time_stamp) + '.csv', 'a', encoding='utf8') as f:
+        with open(out_path + 'train-' + dataset + str(alpha) + vector_type + str(time_stamp) + '.csv', 'a', encoding='utf8') as f:
             f.write(to_file)
         info(file_name + '......end......')
 
     return 0
 
-dataset_train('kdd', alpha=0, topn=4, vector_type='ours')
+dataset_train('kdd', alpha=1, topn=4, vector_type='ourvec')
 
-# 有虫要捉，暂缓，有限修改模型。
+# 有虫要捉，暂缓，优先修改模型。

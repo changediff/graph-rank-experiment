@@ -37,18 +37,18 @@ def sum_weight(target_name, dataset='kdd', doc_lmdt=10, citing_lmdt=10, cited_lm
                 break
         return cite_list
 
-    with open('./data/'+dataset+'_cited') as f:
+    with open('./data/embedding/'+dataset+'_cited') as f:
         cited_name_list = f.read()
-    with open('./data/'+dataset+'_citing') as f:
+    with open('./data/embedding/'+dataset+'_citing') as f:
         citing_name_list = f.read()
     if dataset == 'kdd':
-        target_path = './data/KDD/abstracts/'
-        cited_path = './data/KDD/citedcontexts/'
-        citing_path = './data/KDD/citingcontexts/'
+        target_path = './data/embedding/KDD/abstracts/'
+        cited_path = './data/embedding/KDD/citedcontexts/'
+        citing_path = './data/embedding/KDD/citingcontexts/'
     elif dataset == 'www':
-        target_path = './data/WWW/abstracts/'
-        cited_path = './data/WWW/citedcontexts/'
-        citing_path = './data/WWW/citingcontexts/'
+        target_path = './data/embedding/WWW/abstracts/'
+        cited_path = './data/embedding/WWW/citedcontexts/'
+        citing_path = './data/embedding/WWW/citingcontexts/'
     else:
         raise Exception('wrong dataset name')
     with open(target_path+target_name, encoding='utf8') as f:
