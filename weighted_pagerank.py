@@ -20,6 +20,21 @@ def read_edges_features(path):
             features[tuple(row[:2])] = [float(feature) for feature in row[2:]]
     return features
 
+def calc_weight(features, parameters):
+    """利用特征和参数计算权重，暂采用简单的线性加和"""
+    return np.dot(features, parameters)
+
+def build_graph(edges_features, omega):
+    """建图"""
+    #计算边的权重[(n1,n2,w1), (n2,n3,w2), ...]
+    edges_weight = []
+    for edge in edges_features:
+        edges_weight.append(edge + (calc_weight(edges_features[edge], omega) ,))
+    #建图
+    graph = nx.Graph()
+    graph.add_weighted_edges_from(edges_weight)
+    return graph
+
 def weighted_pagerank(edges_features, nodes_features, omega=None, phi=None, d=0.85):
 
     """
@@ -35,20 +50,13 @@ def weighted_pagerank(edges_features, nodes_features, omega=None, phi=None, d=0.
     if not phi:
         length = len(list(nodes_features.values())[0])
         phi = [1] * length
-
-    #计算边的权重[(n1,n2,w1), (n2,n3,w2), ...]
-    edges_weight = []
-    for edge in edges_features:
-        edges_weight.append(edge + (np.dot(edges_features[edge], omega) ,))
+    
+    graph = build_graph(edges_features, omega)
 
     #计算个性化偏置向量{n1:w1, n2:w2, ...}
     personal_vector = {}
     for node in nodes_features:
-        personal_vector[node] = np.dot(nodes_features[node], phi)
-
-    #计算PageRank
-    graph = nx.Graph()
-    graph.add_weighted_edges_from(edges_weight)
+        personal_vector[node] = calc_weight(nodes_features[node], phi)
 
     return nx.pagerank(graph, alpha=d, personalization=personal_vector)
 
