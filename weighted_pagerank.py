@@ -84,7 +84,7 @@ def wpr(edge_path, node_path, omega=None, phi=None, top_num=None, d=0.85, output
 def main(argv):
 
     omega = phi = m = edge_path = node_path = None
-    output = 'wpr.csv'
+    output = 'test_wpr.csv'
     d = 0.85
 
     try:
