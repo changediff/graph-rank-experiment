@@ -1,4 +1,3 @@
-
 import sys, os
 from weighted_pagerank import wpr
 

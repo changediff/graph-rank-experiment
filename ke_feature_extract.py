@@ -1,5 +1,5 @@
 import itertools
-import nltk
+import csv
 
 def read_file(path):
     with open(path, encoding='utf-8') as file:
@@ -93,5 +93,17 @@ def sum_cite_edge_freq(file_name, data_path, cite_type, window=2):
     
     return cite_edge_freqs
 
-def save_edge_features(main_feature, *args):
-    pass
+def save_edge_features(file_name, main_feature, *args):
+    edge_features = {}
+    for key in main_feature:
+        edge_features[key] = [main_feature[key]]
+    for other_feature in args:
+        for key in edge_features:
+            edge_features[key].append(other_feature.get(key, 0))
+    output = []
+    for key in edge_features:
+        output.append(list(key) + edge_features[key])
+    with open(data_path+'edge_feature/'+file_name, mode='w', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        for item in edge_features:
+            writer.writerow(item)
