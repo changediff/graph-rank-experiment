@@ -36,6 +36,7 @@ def normalized_token(token):
     return stemmer.stem(token.lower())
 
 def filter_text(text, with_tag=True):
+    # import后使用
     """
     过滤掉无用词汇，留下候选关键词，选择保留名词和形容词，并且取词干stem
     使用filtered_text的时候要注意：filtered_text是一串文本，其中的单词是可能会重复出现的。

@@ -83,7 +83,7 @@ def sum_cite_edge_freq(file_name, data_path, cite_type, window=2):
         print('wrong cite type')
     cite_list = get_cite_list(file_name, cite_list_all)
     # 目标文档
-    target = filter_text(read_file(data_path+file_name))
+    target = filter_text(read_file(data_path+'abstracts/'+file_name))
     cite_edge_freqs = {}
     for cite_name in cite_list:
         cite_text = filter_text(read_file(cite_path+cite_name), with_tag=False)
@@ -94,16 +94,37 @@ def sum_cite_edge_freq(file_name, data_path, cite_type, window=2):
     return cite_edge_freqs
 
 def save_edge_features(file_name, data_path, main_feature, *args):
+    """
+    将特征保存为weighted_pagerank所需要的格式
+    main_feature为保存了图结构的特征
+    """
     edge_features = {}
     for key in main_feature:
         edge_features[key] = [main_feature[key]]
+    # print(edge_features)
     for other_feature in args:
         for key in edge_features:
             edge_features[key].append(other_feature.get(key, 0))
+    # print(edge_features)
     output = []
     for key in edge_features:
         output.append(list(key) + edge_features[key])
-    with open(data_path+'edge_feature/'+file_name, mode='w', encoding='utf-8') as csvfile:
+    # print(output)
+    with open(data_path+'edge_features/'+file_name, mode='w', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
-        for item in edge_features:
+        for item in output:
             writer.writerow(item)
+
+if __name__=="__main__":
+    data_path = './data/embedding/KDD/'
+    file_names = read_file(data_path+'abstract_list').split(',')
+    for file_name in file_names:
+        filtered_text = filter_text(read_file(data_path+'abstracts/'+file_name))
+        edge_freq = get_edge_freq(filtered_text, window=2)
+        # print(edge_freq)
+        cited_edge_freq = sum_cite_edge_freq(file_name, data_path, 'cited', window=2)
+        # print(cited_edge_freq)
+        citing_edge_freq = sum_cite_edge_freq(file_name, data_path, 'citing', window=2)
+        # print(citing_edge_freq)
+
+        save_edge_features(file_name, data_path, edge_freq, cited_edge_freq, citing_edge_freq)

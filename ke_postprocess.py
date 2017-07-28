@@ -11,6 +11,7 @@ def rm_tags(file_text):
     return text_notag
 
 def get_phrases(pr, graph, abstr_path, file_name, ng=2):
+    # import it
     """返回一个list：[('large numbers', 0.0442255866192), ('Internet criminal', 0.0440296017801)]"""
     text = rm_tags(read_file(abstr_path+file_name))
     tokens = word_tokenize(text.lower())
