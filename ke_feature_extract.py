@@ -1,5 +1,6 @@
 import itertools
 import csv
+from ke_preprocess import filter_text
 
 def read_file(path):
     with open(path, encoding='utf-8') as file:
@@ -82,18 +83,17 @@ def sum_cite_edge_freq(file_name, data_path, cite_type, window=2):
         print('wrong cite type')
     cite_list = get_cite_list(file_name, cite_list_all)
     # 目标文档
-    # filter_text函数在preprocess中编写
     target = filter_text(read_file(data_path+file_name))
     cite_edge_freqs = {}
     for cite_name in cite_list:
-        cite_text = filter_text(read_file(cite_path+cite_name))
+        cite_text = filter_text(read_file(cite_path+cite_name), with_tag=False)
         cite_edge_freq = single_cite_edge_freq(target, cite_text, window=window)
         for key in cite_edge_freq:
             cite_edge_freqs[key] = cite_edge_freqs.get(key, 0) + cite_edge_freq[key]
     
     return cite_edge_freqs
 
-def save_edge_features(file_name, main_feature, *args):
+def save_edge_features(file_name, data_path, main_feature, *args):
     edge_features = {}
     for key in main_feature:
         edge_features[key] = [main_feature[key]]
