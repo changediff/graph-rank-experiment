@@ -167,3 +167,6 @@ def semi_supervised_pagerank(edges_features, nodes_features, supervised_info, d=
         if e < epsilon or iter_times > max_iter:
             break
     return pi.T.tolist()[0], omega.T.tolist()[0], phi.T.tolist()[0], node_list, iter_times, graph
+
+def ssp():
+    pass

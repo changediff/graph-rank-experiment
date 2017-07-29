@@ -49,9 +49,9 @@ def get_phrases(pr, graph, abstr_path, file_name, ng=2):
         if plenth == 1:
             phrase_score[phrase] = score
         elif plenth == 2:
-            phrase_score[phrase] = score * 0.6
+            phrase_score[phrase] = score * 0.6 # 此处根据词组词控制词组分数
         else:
-            phrase_score[phrase] = score / 3
+            phrase_score[phrase] = score / 3 # 此处根据词组词控制词组分数
         # phrase_score[phrase] = score/len(phrase.split())
     sorted_phrases = sorted(phrase_score.items(), key=lambda d: d[1], reverse=True)
     # print(sorted_phrases)

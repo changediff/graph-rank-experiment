@@ -73,6 +73,9 @@ def pagerank_tofile(pr, output='wpr.csv',top_num=None):
 def wpr(edge_path, node_path, omega=None, phi=None, top_num=None, d=0.85, output='wpr.csv'):
     """
     import后，使用该函数
+    edge_path、node_path和output分别为边特征、点特征和输出结果的路径
+    omega和phi为边特征和点特征的权重参数，默认为平均分配，运算方式为线性加和，即向量数量积
+    d为PageRank算法的参数，取0-1，值越大边特征的影响加越大，经验最优值为0.85
     """
 
     edges_features = read_edges_features(edge_path)

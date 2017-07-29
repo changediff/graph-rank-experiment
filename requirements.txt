@@ -1,0 +1,4 @@
+gensim>=0.13.3
+networkx>=1.11
+nltk>=3.2.1
+numpy>=1.11.1
