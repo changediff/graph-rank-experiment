@@ -1,5 +1,6 @@
 import itertools
 import csv
+import re
 from ke_preprocess import filter_text
 
 def read_file(path):
@@ -93,6 +94,42 @@ def sum_cite_edge_freq(file_name, data_path, cite_type, window=2):
     
     return cite_edge_freqs
 
+def read_node_features(node_list, raw_node_features, file_name, nfselect='07'):
+    # 0@attribute tfidf numeric √
+    # 1@attribute tfidfOver {0, 1}
+    # 2@attribute relativePosition numeric √
+    # 3@attribute firstPosition numeric
+    # 4@attribute firstPositionUnder {0, 1}
+    # 5@attribute inCited {0, 1}
+    # 6@attribute inCiting {0, 1}
+    # 7@attribute citationTFIDF numeric √
+    # 8@attribute keyphraseness numeric
+    # 9@attribute conclusionTF numeric
+    # @attribute isKeyword {-1, 1}
+
+    """node_features:{node1:[1,2,3], node2:[2,3,4]}"""
+    file = re.findall(file_name+r'\s-.*', raw_node_features)
+    tmp1 = []
+    for t in file:
+        tmp1.append(t.split(':'))
+    tmp2 = {}
+    for t in tmp1:
+        # print(t)
+        features_t = re.search(r'\d.*', t[1]).group().split(',')
+        # print(features_t)
+        features_t = list(float(ft) for ft in features_t)
+        if re.search('[a-zA-Z].*', t[0]):
+            tmp2[re.search('[a-zA-Z].*', t[0]).group()] = features_t
+    zero_feature = [0] * len(features_t)
+    # for i in range(feature_num):
+    #     zero_feature.append(0)
+    node_features = {}
+    for node in node_list:
+        f = tmp2.get(node, zero_feature)
+        node_features[node] = [f[int(num)] for num in nfselect]
+
+    return node_features
+
 def save_edge_features(file_name, data_path, main_feature, *args):
     """
     将特征保存为weighted_pagerank所需要的格式
@@ -110,21 +147,30 @@ def save_edge_features(file_name, data_path, main_feature, *args):
     for key in edge_features:
         output.append(list(key) + edge_features[key])
     # print(output)
-    with open(data_path+'edge_features/'+file_name, mode='w', encoding='utf-8') as csvfile:
+    with open(data_path+'edge_features/'+file_name, mode='w', encoding='utf-8', newline='') as csvfile:
         writer = csv.writer(csvfile)
         for item in output:
             writer.writerow(item)
 
+def save_node_features(file_name, data_path, node_features):
+    """将点特征保存为csv表格"""
+    with open(data_path+'node_features/'+file_name, mode='w', encoding='utf-8', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for key in node_features:
+            writer.writerow([key]+node_features[key])
+
 if __name__=="__main__":
-    data_path = './data/embedding/KDD/'
+    data_path = './data/embedding/WWW/' #计算WWW数据集将此行中'KDD'替换为'WWW'
     file_names = read_file(data_path+'abstract_list').split(',')
     for file_name in file_names:
         filtered_text = filter_text(read_file(data_path+'abstracts/'+file_name))
+        # 计算保存边特征，分别为共现次数，被引文共现次数，引文共现次数
         edge_freq = get_edge_freq(filtered_text, window=2)
-        # print(edge_freq)
         cited_edge_freq = sum_cite_edge_freq(file_name, data_path, 'cited', window=2)
-        # print(cited_edge_freq)
         citing_edge_freq = sum_cite_edge_freq(file_name, data_path, 'citing', window=2)
-        # print(citing_edge_freq)
-
         save_edge_features(file_name, data_path, edge_freq, cited_edge_freq, citing_edge_freq)
+        # 读取点的特征，保存为需要的格式
+        node_list = filtered_text.split()
+        raw_node_features = read_file(data_path+'raw_node_features')
+        node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='023789')
+        save_node_features(file_name, data_path, node_features)
