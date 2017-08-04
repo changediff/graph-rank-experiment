@@ -1,3 +1,4 @@
+# coding:utf-8
 from semi_supervised_pagerank import semi_supervised_pagerank as ssp
 
 import sys, os

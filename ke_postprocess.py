@@ -1,6 +1,9 @@
+# coding:utf-8
 from nltk import word_tokenize, ngrams, pos_tag
 from ke_preprocess import is_word, normalized_token
 from ke_feature_extract import read_file
+
+import os, csv, networkx
 
 def rm_tags(file_text):
     """处理输入文本，将已经标注好的POS tagomega去掉，以便使用nltk包处理。"""
@@ -11,7 +14,6 @@ def rm_tags(file_text):
     return text_notag
 
 def get_phrases(pr, graph, abstr_path, file_name, ng=2):
-    # import it
     """返回一个list：[('large numbers', 0.0442255866192), ('Internet criminal', 0.0440296017801)]"""
     text = rm_tags(read_file(abstr_path+file_name))
     tokens = word_tokenize(text.lower())
@@ -59,3 +61,21 @@ def get_phrases(pr, graph, abstr_path, file_name, ng=2):
     # print(sorted_word)
     out_sorted = sorted(sorted_phrases+sorted_word, key=lambda d: d[1], reverse=True)
     return out_sorted
+
+# def read_pr(path):
+#     """pr means pagerank, 存在csv文件中，'word, rank'的形式"""
+#     pr = {}
+#     with open(path) as file:
+#         table = csv.reader(file)
+#         for row in table:
+#             pr[row[0]] = float(row[1])
+#     return pr
+
+# def build_simple_graph(path):
+#     """输入边特征文件路径，输出无权图"""
+#     simple_graph = networkx.Graph()
+#     with open(path) as file:
+#         table = csv.reader(file)
+#         for row in table:
+#             simple_graph.add_edge(row[0], row[1])
+#     return simple_graph

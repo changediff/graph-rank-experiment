@@ -1,3 +1,4 @@
+# coding:utf-8
 import itertools
 import csv
 import re
@@ -160,11 +161,11 @@ def save_node_features(file_name, data_path, node_features):
             writer.writerow([key]+node_features[key])
 
 if __name__=="__main__":
-    data_path = './data/embedding/WWW/' #计算WWW数据集将此行中'KDD'替换为'WWW'
+    data_path = './data/embedding/KDD/' #计算WWW数据集将此行中'KDD'替换为'WWW'
     file_names = read_file(data_path+'abstract_list').split(',')
     for file_name in file_names:
         filtered_text = filter_text(read_file(data_path+'abstracts/'+file_name))
-        # 计算保存边特征，分别为共现次数，被引文共现次数，引文共现次数
+        # 计算保存边特征，分别为：共现次数，被引文献共现次数，引用文献共现次数
         edge_freq = get_edge_freq(filtered_text, window=2)
         cited_edge_freq = sum_cite_edge_freq(file_name, data_path, 'cited', window=2)
         citing_edge_freq = sum_cite_edge_freq(file_name, data_path, 'citing', window=2)

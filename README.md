@@ -1,7 +1,6 @@
 # graph-rank-experiment
 
-围绕PageRank的图排序实验代码
-主要使用networkx库，将PageRank用到关键词提取和电影推荐中
+pagerank
 
 ## weighted_pagerank.py
 

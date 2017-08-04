@@ -1,3 +1,4 @@
+# coding:utf-8
 import sys, os
 from weighted_pagerank import wpr
 

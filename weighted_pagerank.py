@@ -57,8 +57,8 @@ def weighted_pagerank(edges_features, nodes_features, omega=None, phi=None, d=0.
     personal_vector = {}
     for node in nodes_features:
         personal_vector[node] = calc_weight(nodes_features[node], phi)
-
-    return nx.pagerank(graph, alpha=d, personalization=personal_vector)
+    pr = nx.pagerank(graph, alpha=d, personalization=personal_vector)
+    return pr, graph
 
 def pagerank_tofile(pr, output='wpr.csv',top_num=None):
     """将结果保存成csv文件"""
@@ -81,8 +81,10 @@ def wpr(edge_path, node_path, omega=None, phi=None, top_num=None, d=0.85, output
     edges_features = read_edges_features(edge_path)
     nodes_features = read_nodes_features(node_path)
 
-    pr = weighted_pagerank(edges_features, nodes_features, omega=omega, phi=phi, d=d)
+    pr, graph = weighted_pagerank(edges_features, nodes_features, omega=omega, phi=phi, d=d)
     pagerank_tofile(pr, output, top_num=top_num)
+
+    return pr, graph
 
 def main(argv):
 
