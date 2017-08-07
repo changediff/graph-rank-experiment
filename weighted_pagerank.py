@@ -22,7 +22,10 @@ def read_edges_features(path):
 
 def calc_weight(features, parameters):
     """利用特征和参数计算权重，暂采用简单的线性加和"""
-    return np.dot(features, parameters)
+    if all(p==0 for p in parameters):
+        return 1
+    else:
+        return np.dot(features, parameters)
 
 def build_graph(edges_features, omega):
     """建图"""
@@ -43,7 +46,6 @@ def weighted_pagerank(edges_features, nodes_features, omega=None, phi=None, d=0.
     node_features为dict，{n1:[f1,f2], n2:[f1,f2], ...}
     omega和phi都为list
     """
-
     if not omega:
         length = len(list(edges_features.values())[0])
         omega = [1] * length

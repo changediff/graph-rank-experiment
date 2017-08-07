@@ -6,7 +6,8 @@ from ke_postprocess import get_phrases
 
 import os
 
-def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, omega=None, phi=None):
+def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, omega=None, phi=None,
+                        alter_edge = None, alter_node = None):
     """评价实验结果"""
     if dataset == 'kdd':
         abstr_path = './data/embedding/KDD/abstracts/'
@@ -28,6 +29,11 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
         print('wrong dataset name')
     if not os.path.exists(out_path):
         os.makedirs(out_path)
+    
+    if alter_edge:
+        edge_path = alter_edge
+    if alter_node:
+        node_path = alter_node
 
     count = 0
     gold_count = 0
@@ -80,14 +86,11 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
     f1_micro = 2 * prcs_micro * recall_micro / (prcs_micro + recall_micro)
     print(prcs, recall, f1, mrr)
 
-    tofile_result = method_name + ',' + str(ngrams) + ',' \
-                    + str(prcs) + ',' + str(recall) + ',' + str(f1) + ',' + str(mrr) + ',' \
-                    + str(prcs_micro) + ',' + str(recall_micro) + ',' + str(f1_micro) + ',' + str(topn) + ',\n'
+    tofile_result = method_name + ',' + str(prcs) + ',' + str(recall) + ',' + str(f1) + ',' + str(mrr) + ',' \
+                    + str(prcs_micro) + ',' + str(recall_micro) + ',' + str(f1_micro) + ',\n'
     with open(out_path + dataset + 'RESULTS.csv', mode='a', encoding='utf8') as f:
         f.write(tofile_result)
 
 if __name__ == "__main__":
-    evaluate_extraction('www', 'test')
-    evaluate_extraction('kdd', 'test', topn=4)
-
-# 权重的计算需要修改，当omega和phi全为0时，让点权重和边权重平均分配
+    evaluate_extraction('www', 'cikm_without_topic', omega=[1, 1, 3], phi=[95,0,0,5,0,0]) # text, cited, citing
+    evaluate_extraction('kdd', 'cikm_without_topic', topn=4, omega=[2, 3, 3], phi=[88,0,0,12,0,0]) # text, cited, citing

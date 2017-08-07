@@ -2,6 +2,8 @@
 import itertools
 import csv
 import re
+
+from gensim import corpora, models, similarities
 from ke_preprocess import filter_text
 
 def read_file(path):
@@ -33,7 +35,6 @@ def docsim(target, context):
     """
     计算2个文档的相似度，引文共现次数特征需要用到
     """
-    from gensim import corpora, models, similarities
     documents = [context, target]
     texts = [document.lower().split() for document in documents]
     dictionary = corpora.Dictionary(texts)
@@ -160,7 +161,7 @@ def save_node_features(file_name, data_path, node_features):
         for key in node_features:
             writer.writerow([key]+node_features[key])
 
-if __name__=="__main__":
+def old_features():
     data_path = './data/embedding/KDD/' #计算WWW数据集将此行中'KDD'替换为'WWW'
     file_names = read_file(data_path+'abstract_list').split(',')
     for file_name in file_names:
@@ -175,3 +176,6 @@ if __name__=="__main__":
         raw_node_features = read_file(data_path+'raw_node_features')
         node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='023789')
         save_node_features(file_name, data_path, node_features)
+
+def vec_to_cossim():
+    pass
