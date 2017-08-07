@@ -13,7 +13,6 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
         abstr_dir = './data/embedding/KDD/abstracts/'
         out_dir = './result/embedding/'
         gold_dir = './data/embedding/KDD/gold/'
-        pr_dir = './data/embedding/KDD/pr/'
         edge_dir = './data/embedding/KDD/edge_features/'
         node_dir = './data/embedding/KDD/node_features/'
         file_names = read_file('./data/embedding/KDD/abstract_list').split(',')
@@ -21,7 +20,6 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
         abstr_dir = './data/embedding/WWW/abstracts/'
         out_dir = './result/embedding/'
         gold_dir = './data/embedding/WWW/gold/'
-        pr_dir = './data/embedding/WWW/pr/'
         edge_dir = './data/embedding/WWW/edge_features/'
         node_dir = './data/embedding/WWW/node_features/'
         file_names = read_file('./data/embedding/WWW/abstract_list').split(',')
