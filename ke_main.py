@@ -9,14 +9,14 @@ import os
 def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, omega=None, phi=None,
                         alter_edge = None, alter_node = None):
     """评价实验结果"""
-    if dataset == 'kdd':
+    if dataset == 'KDD':
         abstr_dir = './data/embedding/KDD/abstracts/'
         out_dir = './result/embedding/'
         gold_dir = './data/embedding/KDD/gold/'
         edge_dir = './data/embedding/KDD/edge_features/'
         node_dir = './data/embedding/KDD/node_features/'
         file_names = read_file('./data/embedding/KDD/abstract_list').split(',')
-    elif dataset == 'www':
+    elif dataset == 'WWW':
         abstr_dir = './data/embedding/WWW/abstracts/'
         out_dir = './result/embedding/'
         gold_dir = './data/embedding/WWW/gold/'
@@ -86,9 +86,12 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
 
     tofile_result = method_name + ',' + str(prcs) + ',' + str(recall) + ',' + str(f1) + ',' + str(mrr) + ',' \
                     + str(prcs_micro) + ',' + str(recall_micro) + ',' + str(f1_micro) + ',\n'
-    with open(out_dir + dataset + 'RESULTS.csv', mode='a', encoding='utf8') as f:
+    with open(out_dir + dataset + '_RESULTS.csv', mode='a', encoding='utf8') as f:
         f.write(tofile_result)
 
 if __name__ == "__main__":
-    evaluate_extraction('www', 'cikm_without_topic', omega=[1, 1, 3], phi=[95,0,0,5,0,0]) # text, cited, citing
-    evaluate_extraction('kdd', 'cikm_without_topic', topn=4, omega=[2, 3, 3], phi=[88,0,0,12,0,0]) # text, cited, citing
+    # './data/embedding/KDD/edge_features'： text, cited, citing,
+    # evaluate_extraction('WWW', 'cikm_without_topic', omega=[1, 1, 3], phi=[95,0,0,5,0,0])
+    
+    kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/'
+    evaluate_extraction('KDD', 'vec_try', topn=4, alter_edge=kdd_vec_dir+'cossim/', alter_node=kdd_vec_dir)

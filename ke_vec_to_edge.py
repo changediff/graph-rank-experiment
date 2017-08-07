@@ -5,8 +5,8 @@ import csv
 def read_vec(path):
     vec_dict = {}
     with open(path, encoding='utf-8') as file:
-        # 标准csv使用','隔开，有的文件使用空格，所以要改变默认参数delimiter
-        table = csv.reader(file, delimiter=' ')
+        # 标准csv使用','隔开，有的文件使用空格，所以要改变reader中的delimiter参数
+        table = csv.reader(file)
         for row in table:
             vec_dict[row[0]] = list(float(i) for i in row[1:])
     return vec_dict

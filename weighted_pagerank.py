@@ -59,6 +59,13 @@ def weighted_pagerank(edges_features, nodes_features, omega=None, phi=None, d=0.
     personal_vector = {}
     for node in nodes_features:
         personal_vector[node] = calc_weight(nodes_features[node], phi)
+    
+    # 此处对缺失的点特征作默认取值为0的处理，不严谨，只是为了程序正常运行
+    for node in graph.nodes():
+        if node not in personal_vector:
+            personal_vector[node] = 0
+
+
     pr = nx.pagerank(graph, alpha=d, personalization=personal_vector)
     return pr, graph
 
