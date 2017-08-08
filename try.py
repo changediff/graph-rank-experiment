@@ -1,16 +1,17 @@
 # coding:utf-8
-from random import randint
 
-menu = ("回锅肉盖饭-13", "香菇肉片盖饭-13", "木须肉盖饭-13", 
-        "宫保鸡丁盖饭-12", "木耳肉丝盖饭-12", "蒜苔肉丝盖饭-12", 
-        "辣子鸡丁盖饭-12", "尖椒肉丝盖饭-12", "鱼香肉丝盖饭-12", 
-        "木耳鸡蛋盖饭-10", "蒜苔鸡蛋盖饭-10", "韭菜鸡蛋盖饭-10", 
-        "茄子肉丝盖饭-12", "尖椒茄丝盖饭-10", "地三鲜盖饭-12", 
-        "红烧茄子盖饭-12", "土豆肉丝盖饭-12", "土豆丝盖饭-9", 
-        "西红柿鸡蛋盖饭-10", "香菇油菜盖饭-10", "圆白菜盖饭-9", 
-        "猪肉水饺-12", "蛋炒饭-8", "牛肉面-12", 
-        "老干妈炒饭-9", "扬州炒饭-9", "油泼面-9")
+import csv
+from ke_preprocess import read_file
 
-supper = menu[randint(0, len(menu)-1)]
+names = read_file('./data/embedding/KDD/abstract_list').split(',')
 
-print(supper)
+vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/'
+for name in names:
+    vecs_text = read_file(vec_dir+name)
+    vecs = vecs_text.split('\n')
+    vecs_csv = []
+    for vec in vecs:
+        vecs_csv.append(vec.split())
+    with open(vec_dir+'convert/'+name, mode='w') as file:
+        table = csv.writer(file)
+        table.writerows(vecs_csv)
