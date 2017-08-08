@@ -1,15 +1,16 @@
-def cosine_sim (vec1, vec2):
-    import numpy as np
-    from numpy import linalg as la
+# coding:utf-8
+from random import randint
 
-    inA = np.mat(vec1)
-    inB = np.mat(vec2)
-    num = float(inA * inB.T) #若为行向量: A * B.T
-    donom = la.norm(inA) * la.norm(inB) ##余弦值 
-    return 0.5 + 0.5*(num / donom) # 归一化
-    #关于归一化：因为余弦值的范围是 [-1,+1] ，相似度计算时一般需要把值归一化到 [0,1]
+menu = ("回锅肉盖饭-13", "香菇肉片盖饭-13", "木须肉盖饭-13", 
+        "宫保鸡丁盖饭-12", "木耳肉丝盖饭-12", "蒜苔肉丝盖饭-12", 
+        "辣子鸡丁盖饭-12", "尖椒肉丝盖饭-12", "鱼香肉丝盖饭-12", 
+        "木耳鸡蛋盖饭-10", "蒜苔鸡蛋盖饭-10", "韭菜鸡蛋盖饭-10", 
+        "茄子肉丝盖饭-12", "尖椒茄丝盖饭-10", "地三鲜盖饭-12", 
+        "红烧茄子盖饭-12", "土豆肉丝盖饭-12", "土豆丝盖饭-9", 
+        "西红柿鸡蛋盖饭-10", "香菇油菜盖饭-10", "圆白菜盖饭-9", 
+        "猪肉水饺-12", "蛋炒饭-8", "牛肉面-12", 
+        "老干妈炒饭-9", "扬州炒饭-9", "油泼面-9")
 
-a = [1,1,1]
-b = [2,-3,-1]
+supper = menu[randint(0, len(menu)-1)]
 
-print(cosine_sim(a,b))
+print(supper)

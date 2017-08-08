@@ -1,7 +1,6 @@
 # coding:utf-8
 from nltk import word_tokenize, ngrams, pos_tag
-from ke_preprocess import is_word, normalized_token
-from ke_feature_extract import read_file
+from ke_preprocess import is_word, normalized_token, read_file
 
 import os, csv, networkx
 

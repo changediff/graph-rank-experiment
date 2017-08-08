@@ -4,11 +4,7 @@ import csv
 import re
 
 from gensim import corpora, models, similarities
-from ke_preprocess import filter_text
-
-def read_file(path):
-    with open(path, encoding='utf-8') as file:
-        return file.read()
+from ke_preprocess import filter_text, read_file
 
 def get_edge_freq(filtered_text, window=2):
     """
@@ -57,10 +53,10 @@ def single_cite_edge_freq(target, cite_text, window=2):
         edge_sweight[tuple(sorted(edge))] = sim * edge_count[edge]
     return edge_sweight
 
-def sum_cite_edge_freq(file_name, data_path, cite_type, window=2):
+def sum_cite_edge_freq(file_name, data_dir, cite_type, window=2):
     """
     读取文件，计算引用特征
-    data_path为数据集根目录，如KDD数据集为'./data/embedding/KDD/'
+    data_dir为数据集根目录，如KDD数据集为'./data/embedding/KDD/'
     """
     def get_cite_list(target_name, cite_list_all):
         # cite_list_all为引用文件名列表
@@ -77,19 +73,19 @@ def sum_cite_edge_freq(file_name, data_path, cite_type, window=2):
         return cite_list
 
     if cite_type == 'cited':
-        cite_path = data_path + 'citedcontexts/'
-        cite_list_all = read_file(data_path+'cited_list')
+        cite_dir = data_dir + 'citedcontexts/'
+        cite_list_all = read_file(data_dir+'cited_list')
     elif cite_type == 'citing':
-        cite_path = data_path + 'citingcontexts/'
-        cite_list_all = read_file(data_path+'citing_list')
+        cite_dir = data_dir + 'citingcontexts/'
+        cite_list_all = read_file(data_dir+'citing_list')
     else:
         print('wrong cite type')
     cite_list = get_cite_list(file_name, cite_list_all)
     # 目标文档
-    target = filter_text(read_file(data_path+'abstracts/'+file_name))
+    target = filter_text(read_file(data_dir+'abstracts/'+file_name))
     cite_edge_freqs = {}
     for cite_name in cite_list:
-        cite_text = filter_text(read_file(cite_path+cite_name), with_tag=False)
+        cite_text = filter_text(read_file(cite_dir+cite_name), with_tag=False)
         cite_edge_freq = single_cite_edge_freq(target, cite_text, window=window)
         for key in cite_edge_freq:
             cite_edge_freqs[key] = cite_edge_freqs.get(key, 0) + cite_edge_freq[key]
@@ -132,7 +128,7 @@ def read_node_features(node_list, raw_node_features, file_name, nfselect='07'):
 
     return node_features
 
-def save_edge_features(file_name, data_path, main_feature, *args):
+def save_edge_features(file_name, data_dir, main_feature, *args):
     """
     将特征保存为weighted_pagerank所需要的格式
     main_feature为保存了图结构的特征
@@ -149,33 +145,31 @@ def save_edge_features(file_name, data_path, main_feature, *args):
     for key in edge_features:
         output.append(list(key) + edge_features[key])
     # print(output)
-    with open(data_path+'edge_features/'+file_name, mode='w', encoding='utf-8', newline='') as csvfile:
+    with open(data_dir+'edge_features/'+file_name, mode='w', encoding='utf-8', newline='') as csvfile:
         writer = csv.writer(csvfile)
         for item in output:
             writer.writerow(item)
 
-def save_node_features(file_name, data_path, node_features):
+def save_node_features(file_name, data_dir, node_features):
     """将点特征保存为csv表格"""
-    with open(data_path+'node_features/'+file_name, mode='w', encoding='utf-8', newline='') as csvfile:
+    with open(data_dir+'node_features/'+file_name, mode='w', encoding='utf-8', newline='') as csvfile:
         writer = csv.writer(csvfile)
         for key in node_features:
             writer.writerow([key]+node_features[key])
 
-def old_features():
-    data_path = './data/embedding/KDD/' #计算WWW数据集将此行中'KDD'替换为'WWW'
-    file_names = read_file(data_path+'abstract_list').split(',')
+if __name__ == "__main__":
+    # 计算生成经典特征
+    data_dir = './data/embedding/KDD/' #计算WWW数据集将此行中'KDD'替换为'WWW'
+    file_names = read_file(data_dir+'abstract_list').split(',')
     for file_name in file_names:
-        filtered_text = filter_text(read_file(data_path+'abstracts/'+file_name))
+        filtered_text = filter_text(read_file(data_dir+'abstracts/'+file_name))
         # 计算保存边特征，分别为：共现次数，被引文献共现次数，引用文献共现次数
         edge_freq = get_edge_freq(filtered_text, window=2)
-        cited_edge_freq = sum_cite_edge_freq(file_name, data_path, 'cited', window=2)
-        citing_edge_freq = sum_cite_edge_freq(file_name, data_path, 'citing', window=2)
-        save_edge_features(file_name, data_path, edge_freq, cited_edge_freq, citing_edge_freq)
+        cited_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'cited', window=2)
+        citing_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'citing', window=2)
+        save_edge_features(file_name, data_dir, edge_freq, cited_edge_freq, citing_edge_freq)
         # 读取点的特征，保存为需要的格式
         node_list = filtered_text.split()
-        raw_node_features = read_file(data_path+'raw_node_features')
+        raw_node_features = read_file(data_dir+'raw_node_features')
         node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='023789')
-        save_node_features(file_name, data_path, node_features)
-
-def vec_to_cossim():
-    pass
+        save_node_features(file_name, data_dir, node_features)

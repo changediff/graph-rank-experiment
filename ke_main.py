@@ -1,6 +1,5 @@
 # coding:utf-8
-from ke_preprocess import normalized_token
-from ke_feature_extract import read_file
+from ke_preprocess import normalized_token, read_file
 from weighted_pagerank import wpr
 from ke_postprocess import get_phrases
 

@@ -2,27 +2,27 @@
 
 import csv
 
-def read_vec(path):
-    vec_dict = {}
-    with open(path, encoding='utf-8') as file:
-        # 标准csv使用','隔开，有的文件使用空格，所以要改变reader中的delimiter参数
-        table = csv.reader(file)
-        for row in table:
-            vec_dict[row[0]] = list(float(i) for i in row[1:])
-    return vec_dict
+def lvec_to_feature(vec_path, edge_path, out_path):
 
-def cosine_sim (vec1, vec2):
-    import numpy as np
-    from numpy import linalg as la
+    def read_vec(path):
+        vec_dict = {}
+        with open(path, encoding='utf-8') as file:
+            # 标准csv使用','隔开，有的文件使用空格，所以要改变reader中的delimiter参数
+            table = csv.reader(file)
+            for row in table:
+                vec_dict[row[0]] = list(float(i) for i in row[1:])
+        return vec_dict
 
-    inA = np.mat(vec1)
-    inB = np.mat(vec2)
-    num = float(inA * inB.T) #若为行向量: A * B.T
-    donom = la.norm(inA) * la.norm(inB) ##余弦值 
-    return 0.5 + 0.5*(num / donom) # 归一化
-    #关于归一化：因为余弦值的范围是 [-1,+1] ，相似度计算时一般需要把值归一化到 [0,1]
+    def cosine_sim (vec1, vec2):
+        import numpy as np
+        from numpy import linalg as la
 
-def vec_to_feature(vec_path, edge_path, out_path):
+        inA = np.mat(vec1)
+        inB = np.mat(vec2)
+        num = float(inA * inB.T) #若为行向量: A * B.T
+        donom = la.norm(inA) * la.norm(inB) ##余弦值 
+        return 0.5 + 0.5*(num / donom) # 归一化
+        #关于归一化：因为余弦值的范围是 [-1,+1] ，相似度计算时一般需要把值归一化到 [0,1]
 
     vec_dict = read_vec(vec_path)
     vec_lenth = len(list(vec_dict.values())[0])
@@ -61,5 +61,5 @@ if __name__ == "__main__":
 
     for name in file_names:
         print(name)
-        vec_to_feature(vec_dir+name, edge_dir+name, out_dir+name)
+        lvec_to_feature(vec_dir+name, edge_dir+name, out_dir+name)
 

@@ -3,6 +3,10 @@ from nltk import word_tokenize, pos_tag
 from nltk.stem import SnowballStemmer
 from re import match
 
+def read_file(path):
+    with open(path, encoding='utf-8') as file:
+        return file.read()
+
 def get_tagged_tokens(file_text):
     """将摘要切分，得到词和POS"""
     file_splited = file_text.split()
