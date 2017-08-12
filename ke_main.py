@@ -6,7 +6,7 @@ from ke_postprocess import get_phrases
 import os
 
 def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, omega=None, phi=None,
-                        alter_edge = None, alter_node = None):
+                        alter_edge=None, alter_node=None):
     """评价实验结果"""
     if dataset == 'KDD':
         abstr_dir = './data/embedding/KDD/abstracts/'
@@ -39,7 +39,7 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
     prcs_micro = 0
     recall_micro = 0
     for file_name in file_names:
-
+        # print(file_name)
         pr, graph = wpr(edge_dir+file_name, node_dir+file_name, omega=omega, phi=phi)
 
         gold = read_file(gold_dir+file_name)
@@ -91,6 +91,8 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
 if __name__ == "__main__":
     # './data/embedding/KDD/edge_features'： text, cited, citing,
     # evaluate_extraction('WWW', 'cikm_without_topic', omega=[1, 1, 3], phi=[95,0,0,5,0,0])
-    
-    kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/'
-    evaluate_extraction('KDD', 'vec_try', topn=4, alter_edge=kdd_vec_dir+'cossim/', alter_node=kdd_vec_dir)
+
+    # omega: WWW-113, KDD-233
+    # phi: WWW[95,0,0,5,0,0], KDD[88,0,0,12,0,0]
+    kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/convert/'
+    evaluate_extraction('KDD', 'vec_try', topn=4, omega=[1,0,0,0], alter_node=kdd_vec_dir)

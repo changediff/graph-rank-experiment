@@ -2,8 +2,10 @@
 
 import csv
 import math
+import gensim
 
-from ke_preprocess import read_file, filter_text
+from ke_preprocess import read_file, filter_text, normalized_token
+from ke_postprocess import rm_tags
 
 def cosine_sim (vec1, vec2):
     """余弦相似度"""
@@ -24,6 +26,9 @@ def euc_distance(vec1, vec2):
     return distance
 
 def read_vec(path):
+    """
+    read liuhuan vec
+    """
     vec_dict = {}
     with open(path, encoding='utf-8') as file:
         # 标准csv使用','隔开，有的文件使用空格，所以要改变reader中的delimiter参数
@@ -31,6 +36,37 @@ def read_vec(path):
         for row in table:
             vec_dict[row[0]] = list(float(i) for i in row[1:])
     return vec_dict
+
+def read_edges(path):
+    """
+    read csv edge features
+    return a (node1, node2):[features] dict
+    """
+    edges = {}
+    with open(path, encoding='utf-8') as file:
+        table = csv.reader(file)
+        for row in table:
+            edges[(row[0], row[1])] = [float(i) for i in row[2:]]
+    return edges
+
+def text2_stem_dict(text_notag):
+    """
+    convert text to a stem:word dict
+    """
+    stem_dict = {}
+    for word in text_notag.split():
+        stem_dict[normalized_token(word)] = word
+    return stem_dict
+
+def edgefeatures_2file(path, edge_features):
+    output = []
+    for edge in edge_features:
+        output.append(list(edge) + edge_features[edge])
+
+    with open(path, mode='w', encoding='utf-8') as file:
+        table = csv.writer(file)
+        table.writerows(output)
+
 
 def lvec_to_feature(vec_path, edge_path, out_path):
     """求词向量的余弦相似度作为边特征之一"""
@@ -57,19 +93,10 @@ def lvec_to_feature(vec_path, edge_path, out_path):
         table = csv.writer(file)
         table.writerows(edge_cossim)
 
-def read_edges(path):
-    """读取边特征，返回dict"""
-    edges = {}
-    with open(path, encoding='utf-8') as file:
-        table = csv.reader(file)
-        for row in table:
-            edges[(row[0], row[1])] = [float(i) for i in row[2:]]
-    return edges
-
-def add_word_attr(filtered_text, edges_features, vecs):
+def add_word_attr(filtered_text, edge_features, vecs_dict):
     """
-    filterted_text为空格连接的单词序列，edges_features和vecs为dict
-    特征计算后append到edges_features中
+    filterted_text为空格连接的单词序列，edge_features和vecs为dict
+    特征计算后append到edge_features中
     """
     # 词向量的格式不统一，要想办法处理
     def attr(freq1, freq2, distance):
@@ -78,33 +105,58 @@ def add_word_attr(filtered_text, edges_features, vecs):
     def dice(freq1, freq2, edge_count):
         return 2 * edge_count / (freq1 * freq2)
 
-    for edge in edges_features:
+    for edge in edge_features:
         splited = filtered_text.split()
         freq1 = splited.count(edge[0])
         freq2 = splited.count(edge[1])
-        edge_count = edges_features[edge][0]
-        vec1 = vecs[edge[0]]
-        vec2 = vecs[edge[1]]
+        edge_count = edge_features[edge][0]
+        # 读不到的词向量设为全0
+        default_vec = [0] * len(list(vecs_dict.values())[0])
+        vec1 = vecs_dict.get(edge[0], default_vec)
+        vec2 = vecs_dict.get(edge[1], default_vec)
         distance = euc_distance(vec1, vec2)
         word_attr = attr(freq1, freq2, distance) * dice(freq1, freq2, edge_count)
-        edges_features[edge].append(word_attr)
+        edge_features[edge].append(word_attr)
 
-    return edges_features
+    return edge_features
 
+def google_news_sim(text, edge_features, vec_model):
+    """
+    return similarity of word vectors trained by google news
+
+    params: text, string read from dataset
+            edge_features, a (node1, node2):[feature1, feature2] dict read from old_features
+            vec_model, gensim vec models
+    """
+    text_notag = rm_tags(text)
+    stem_dict = text2_stem_dict(text_notag)
+
+    for edge in edge_features:
+        word1 = stem_dict.get(edge[0], edge[0])
+        word2 = stem_dict.get(edge[1], edge[1])
+        try:
+            sim = vec_model.wv.similarity(word1, word2)
+        except:
+            sim = 0.01
+        edge_features[edge].append(sim)
+
+    return edge_features
 
 if __name__ == "__main__":
-    # 数据集种类
-    dataset = 'KDD'
-    # 词向量数据所在文件夹
-    vec_dir = './data/embedding/vec/liuhuan/with_topic/' + dataset+ '/'
-    # 输出的边相似度特征文件夹
-    out_dir = vec_dir + 'cossim/'
-    # 已有的边特征文件夹，需要其中的边的信息
-    edge_dir = './data/embedding/' + dataset + '/edge_features/'
-    # 此处的abstract_list就是KDD_filelist,重新组织了数据集的目录
-    with open('./data/embedding/'+dataset+'/abstract_list') as file:
-        file_names = file.read().split(',')
 
-    for name in file_names:
-        print(name)
-        lvec_to_feature(vec_dir+name, edge_dir+name, out_dir+name)
+    dataset = 'KDD'
+    dataset_dir = './data/embedding/' + dataset + '/'
+    extvec_dir = './data/embedding/vec/externel_vec/'
+    newsvec_path = extvec_dir + 'GoogleNews-vectors-negative300.bin'
+    edgefeature_dir = dataset_dir + 'edge_features/'
+
+    filenames = read_file(dataset_dir + 'abstract_list').split(',')
+    newsvec_model = gensim.models.KeyedVectors.load_word2vec_format(newsvec_path, binary=True)
+    for filename in filenames:
+        print(filename)
+        edge_features = read_edges(edgefeature_dir + filename)
+        text = read_file(dataset_dir + 'abstracts/' + filename)
+        
+        edge_features_new = google_news_sim(text, edge_features, newsvec_model)
+
+        edgefeatures_2file(edgefeature_dir+filename, edge_features_new)

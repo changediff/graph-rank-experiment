@@ -8,7 +8,8 @@ def read_nodes_features(path):
     with open(path, encoding='utf-8') as csvfile:
         table = csv.reader(csvfile)
         for row in table:
-            features[row[0]] = [float(feature) for feature in row[1:]]
+            if len(row) > 1:
+                features[row[0]] = [float(feature) for feature in row[1:]]
     return features
 
 def read_edges_features(path):
@@ -59,6 +60,7 @@ def weighted_pagerank(edges_features, nodes_features, omega=None, phi=None, d=0.
     personal_vector = {}
     for node in nodes_features:
         personal_vector[node] = calc_weight(nodes_features[node], phi)
+        # personal_vector[node] = max(nodes_features[node])
     
     # 此处对缺失的点特征作默认取值为0的处理，不严谨，只是为了程序正常运行
     for node in graph.nodes():

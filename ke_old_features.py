@@ -169,7 +169,7 @@ if __name__ == "__main__":
         citing_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'citing', window=2)
         save_edge_features(file_name, data_dir, edge_freq, cited_edge_freq, citing_edge_freq)
         # 读取点的特征，保存为需要的格式
-        node_list = filtered_text.split()
-        raw_node_features = read_file(data_dir+'raw_node_features')
-        node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='023789')
-        save_node_features(file_name, data_dir, node_features)
+        # node_list = filtered_text.split()
+        # raw_node_features = read_file(data_dir+'raw_node_features')
+        # node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='023789')
+        # save_node_features(file_name, data_dir, node_features)
