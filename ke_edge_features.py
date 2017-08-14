@@ -74,10 +74,8 @@ def edgefeatures_2file(path, edge_features):
         table.writerows(output)
 
 
-def lvec_to_feature(vec_path, edge_path, out_path):
+def lvec_to_feature(edge_features, vec_dict):
     """求词向量的余弦相似度作为边特征之一"""
-    # 待修改，将特征写入到ke_old_features生成的特征表中
-    vec_dict = read_vec(vec_path)
     vec_lenth = len(list(vec_dict.values())[0])
     # 此处为缺省向量，当数据集中读取不到对应的向量时取该值，不严谨，只是为了程序可以顺利运行
     default_vec = [1] * vec_lenth
@@ -99,13 +97,13 @@ def lvec_to_feature(vec_path, edge_path, out_path):
         table = csv.writer(file)
         table.writerows(edge_cossim)
 
-def add_word_attr(filtered_text, edge_features, vec_dict):
+def add_word_attr(filtered_text, edge_features, vec_dict, part=None):
     """
     word attraction rank
     filterted_text为空格连接的单词序列，edge_features和vecs为dict
     特征计算后append到edge_features中
 
-    params: filtered_text, string
+    params: filtered_text, filtered normalized string
             edge_features, a edge:feature dict
             vec_dict, 
     """
@@ -126,7 +124,14 @@ def add_word_attr(filtered_text, edge_features, vec_dict):
         vec1 = vec_dict.get(edge[0], default_vec)
         vec2 = vec_dict.get(edge[1], default_vec)
         distance = euc_distance(vec1, vec2)
-        word_attr = attr(freq1, freq2, distance) * dice(freq1, freq2, edge_count)
+
+        if part == 'attr':
+            word_attr = attr(freq1, freq2, distance)
+        elif part == 'dice':
+            word_attr = dice(freq1, freq2, edge_count)
+        else:
+            word_attr = attr(freq1, freq2, distance) * dice(freq1, freq2, edge_count)
+
         edge_features[edge].append(word_attr)
 
     return edge_features
@@ -171,15 +176,15 @@ if __name__ == "__main__":
     #     edge_features_new = google_news_sim(text, edge_features, newsvec_model)
     #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
-    # add edgefeature: word attraction rank
-    csv_vec_dir = './data/embedding/vec/liu/data_8_11/WordWithTopic/' + dataset + '/'
-    for filename in filenames:
-        print(filename)
-        text = read_file(dataset_dir + 'abstracts/' + filename)
-        filtered_text = filter_text(text)
-        edge_features = read_edges(edgefeature_dir + filename)
-        vec_dict = read_vec(csv_vec_dir + filename)
-        edge_features_new = add_word_attr(filtered_text, edge_features, vec_dict)
-        edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+    # # add edgefeature: word attraction rank
+    # csv_vec_dir = './data/embedding/vec/liu/data_8_11/Word/' + dataset + '/'
+    # for filename in filenames:
+    #     print(filename)
+    #     text = read_file(dataset_dir + 'abstracts/' + filename)
+    #     filtered_text = filter_text(text)
+    #     edge_features = read_edges(edgefeature_dir + filename)
+    #     vec_dict = read_vec(csv_vec_dir + filename)
+    #     edge_features_new = add_word_attr(filtered_text, edge_features, vec_dict)
+    #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
     print('.......DONE........')
