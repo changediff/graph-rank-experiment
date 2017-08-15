@@ -75,30 +75,34 @@ def edgefeatures_2file(path, edge_features):
 
 
 def lvec_to_feature(edge_features, vec_dict):
-    """求词向量的余弦相似度作为边特征之一"""
+    """
+    edge feature
+    求词向量的余弦相似度作为边特征
+    """
     vec_lenth = len(list(vec_dict.values())[0])
     # 此处为缺省向量，当数据集中读取不到对应的向量时取该值，不严谨，只是为了程序可以顺利运行
     default_vec = [1] * vec_lenth
 
-    edges = []
-    with open(edge_path, encoding='utf-8') as file:
-        table = csv.reader(file)
-        for row in table:
-            edges.append(row[:2])
+    # edges = []
+    # with open(edge_path, encoding='utf-8') as file:
+    #     table = csv.reader(file)
+    #     for row in table:
+    #         edges.append(row[:2])
 
-    edge_cossim = []
-    for edge in edges:
-        start_vec = vec_dict.get(edge[0], default_vec)
-        end_vec = vec_dict.get(edge[1], default_vec)
-        cossim = cosine_sim(start_vec, end_vec)
-        edge_cossim.append(edge+[cossim])
+    # edge_cossim = []
+    # for edge in edges:
+    #     start_vec = vec_dict.get(edge[0], default_vec)
+    #     end_vec = vec_dict.get(edge[1], default_vec)
+    #     cossim = cosine_sim(start_vec, end_vec)
+    #     edge_cossim.append(edge+[cossim])
     
-    with open(out_path, encoding='utf-8', mode='w') as file:
-        table = csv.writer(file)
-        table.writerows(edge_cossim)
+    # with open(out_path, encoding='utf-8', mode='w') as file:
+    #     table = csv.writer(file)
+    #     table.writerows(edge_cossim)
 
 def add_word_attr(filtered_text, edge_features, vec_dict, part=None):
     """
+    edge feature
     word attraction rank
     filterted_text为空格连接的单词序列，edge_features和vecs为dict
     特征计算后append到edge_features中
@@ -129,6 +133,8 @@ def add_word_attr(filtered_text, edge_features, vec_dict, part=None):
             word_attr = attr(freq1, freq2, distance)
         elif part == 'dice':
             word_attr = dice(freq1, freq2, edge_count)
+        elif part == 'attr_freq':
+            word_attr = attr(freq1, freq2, distance) * edge_count
         else:
             word_attr = attr(freq1, freq2, distance) * dice(freq1, freq2, edge_count)
 
@@ -138,6 +144,7 @@ def add_word_attr(filtered_text, edge_features, vec_dict, part=None):
 
 def google_news_sim(text, edge_features, vec_model):
     """
+    edge feature
     return similarity of word vectors trained by google news
 
     params: text, string read from dataset
@@ -158,9 +165,49 @@ def google_news_sim(text, edge_features, vec_model):
 
     return edge_features
 
+def svec_maxsim(svec_matrix, edge_features, stem_dict=None):
+    """
+    return MaxSimC edge feature
+
+    :param svec_matrix: a word_stemed:vec_matrix dict
+    :param edge_features: a word:feature_list dict
+    :stem_dict: a word:original_word dict
+    """
+    def trans_word(word, stem_dict=stem_dict):
+        if stem_dict == None:
+            return word
+        else:
+            return stem_dict[word]
+    
+    for edge in edge_features:
+        sims = []
+        for vec1 in svec_matrix[trans_word(edge[0])]:
+            for vec2 in svec_matrix[trans_word(edge[1])]:
+                sims.append(cosine_sim(vec1, vec2))
+        edge_features[edge].append(max(sims))
+    return edge_features
+
+def read_svec(path):
+    """
+    return svec_matrix dict
+
+    :param path: svec path
+    """
+    with open(path) as file:
+        table = csv.reader(file, delimiter=' ')
+        next(table)
+        svec_matrix = {}
+        for row in table:
+            word = row[0].split('#')[0]
+            if svec_matrix.get(word, None):
+                svec_matrix[word] += [float(x) for x in row[1:-1]]
+            else:
+                svec_matrix[word] = [float(x) for x in row[1:-1]]
+        return svec_matrix
+
 if __name__ == "__main__":
 
-    dataset = 'KDD'
+    dataset = 'WWW'
     dataset_dir = './data/embedding/' + dataset + '/'
     edgefeature_dir = dataset_dir + 'edge_features/'
     filenames = read_file(dataset_dir + 'abstract_list').split(',')
@@ -176,15 +223,25 @@ if __name__ == "__main__":
     #     edge_features_new = google_news_sim(text, edge_features, newsvec_model)
     #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
-    # # add edgefeature: word attraction rank
-    # csv_vec_dir = './data/embedding/vec/liu/data_8_11/Word/' + dataset + '/'
+    # add edgefeature: word attraction rank
+    lvec_type = 'WordWithTopic'
+    lvec_dir = './data/embedding/vec/liu/data_8_11/' + lvec_type + '/' + dataset + '/'
+    for filename in filenames:
+        print(filename)
+        text = read_file(dataset_dir + 'abstracts/' + filename)
+        filtered_text = filter_text(text)
+        edge_features = read_edges(edgefeature_dir + filename)
+        vec_dict = read_vec(lvec_dir + filename)
+        edge_features_new = add_word_attr(filtered_text, edge_features, vec_dict, part='attr_freq')
+        edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+
+    # # add edgefeature: MaxSimC
+    # svec_type = 'stem'
+    # svec_path = './data/embedding/vec/shi/' + dataset + '_embedding_' + svec_type + '.vec'
+    # svec_matrix = read_svec(svec_path)
     # for filename in filenames:
-    #     print(filename)
-    #     text = read_file(dataset_dir + 'abstracts/' + filename)
-    #     filtered_text = filter_text(text)
     #     edge_features = read_edges(edgefeature_dir + filename)
-    #     vec_dict = read_vec(csv_vec_dir + filename)
-    #     edge_features_new = add_word_attr(filtered_text, edge_features, vec_dict)
+    #     edge_features_new = svec_maxsim(svec_matrix, edge_features)
     #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
-    print('.......DONE........')
+    print('.......feature_extract_DONE........')

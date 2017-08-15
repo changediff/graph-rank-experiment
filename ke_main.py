@@ -95,4 +95,4 @@ if __name__ == "__main__":
     # omega: WWW-113, KDD-233
     # phi: WWW[95,0,0,5,0,0], KDD[88,0,0,12,0,0]
     # kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/convert/'
-    evaluate_extraction('WWW', 'textrank', topn=4, omega=[0,0,0,0,0,0,0,1], phi=[0])
+    evaluate_extraction('WWW', 'w2v', topn=4, omega=[0]*7+[1], phi=[0])

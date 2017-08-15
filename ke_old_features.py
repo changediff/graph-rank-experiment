@@ -159,7 +159,7 @@ def save_node_features(file_name, data_dir, node_features):
 
 if __name__ == "__main__":
     # 计算生成经典特征
-    data_dir = './data/embedding/KDD/' #计算WWW数据集将此行中'KDD'替换为'WWW'
+    data_dir = './data/embedding/WWW/' #计算WWW数据集将此行中'KDD'替换为'WWW'
     file_names = read_file(data_dir+'abstract_list').split(',')
     for file_name in file_names:
         print(file_name)
@@ -174,4 +174,4 @@ if __name__ == "__main__":
         # raw_node_features = read_file(data_dir+'raw_node_features')
         # node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='023789')
         # save_node_features(file_name, data_dir, node_features)
-    print('.......DONE........')
+    print('.......old_features_DONE........')

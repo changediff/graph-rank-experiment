@@ -1,18 +1,13 @@
 # coding:utf-8
-import gensim
+import csv
 
-# Load Google's pre-trained Word2Vec model.
-# google_vec_path = './data/embedding/vec/externel_vec/GoogleNews-vectors-negative300.bin'
-# model = gensim.models.KeyedVectors.load_word2vec_format(google_vec_path, binary=True)
+def read_svec(path):
+    with open(path) as file:
+        table = csv.reader(file, delimiter=' ')
+        next(table)
+        for row in table:
+            print(row[1:])
 
-# sim = model.wv.similarity('man', 'woman')
-# sim2 = model.wv.similarity('men', 'women')
-# sim3 = model.wv.similarity('queen', 'king')
+path = './data/embedding/vec/shi/KDD_embedding_stem.vec'
 
-# print(sim3)
-
-from ke_preprocess import read_file
-
-dataset_dir = './data/embedding/KDD/'
-filenames = read_file(dataset_dir + 'abstract_list').split(',')
-print(len(filenames))
+read_svec(path)
