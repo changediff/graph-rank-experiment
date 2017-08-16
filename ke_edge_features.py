@@ -179,10 +179,13 @@ def svec_maxsim(svec_matrix, edge_features, stem_dict=None):
         else:
             return stem_dict[word]
     
+    # default vector, need modefy later
+    default_matrix = [[1] * 300] * 10
+
     for edge in edge_features:
         sims = []
-        for vec1 in svec_matrix[trans_word(edge[0])]:
-            for vec2 in svec_matrix[trans_word(edge[1])]:
+        for vec1 in svec_matrix.get(trans_word(edge[0]), default_matrix):
+            for vec2 in svec_matrix.get(trans_word(edge[1]), default_matrix):
                 sims.append(cosine_sim(vec1, vec2))
         edge_features[edge].append(max(sims))
     return edge_features
@@ -200,14 +203,14 @@ def read_svec(path):
         for row in table:
             word = row[0].split('#')[0]
             if svec_matrix.get(word, None):
-                svec_matrix[word] += [float(x) for x in row[1:-1]]
+                svec_matrix[word] += [[float(x) for x in row[1:-1]]]
             else:
-                svec_matrix[word] = [float(x) for x in row[1:-1]]
+                svec_matrix[word] = [[float(x) for x in row[1:-1]]]
         return svec_matrix
 
 if __name__ == "__main__":
 
-    dataset = 'WWW'
+    dataset = 'KDD'
     dataset_dir = './data/embedding/' + dataset + '/'
     edgefeature_dir = dataset_dir + 'edge_features/'
     filenames = read_file(dataset_dir + 'abstract_list').split(',')
@@ -223,25 +226,42 @@ if __name__ == "__main__":
     #     edge_features_new = google_news_sim(text, edge_features, newsvec_model)
     #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
-    # add edgefeature: word attraction rank
-    lvec_type = 'WordWithTopic'
-    lvec_dir = './data/embedding/vec/liu/data_8_11/' + lvec_type + '/' + dataset + '/'
+    # # add edgefeature: word attraction rank
+    # lvec_type = 'WordWithTopic'
+    # lvec_dir = './data/embedding/vec/liu/data_8_11/' + lvec_type + '/' + dataset + '/'
+    # for filename in filenames:
+    #     print(filename)
+    #     text = read_file(dataset_dir + 'abstracts/' + filename)
+    #     filtered_text = filter_text(text)
+    #     edge_features = read_edges(edgefeature_dir + filename)
+    #     vec_dict = read_vec(lvec_dir + filename)
+    #     edge_features_new = add_word_attr(filtered_text, edge_features, vec_dict, part='attr_freq')
+    #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+
+    # add edgefeature: MaxSimC
+    svec_type = 'stem'
+    svec_path = './data/embedding/vec/shi/' + dataset + '_embedding_' + svec_type + '.vec'
+    svec_matrix = read_svec(svec_path)
     for filename in filenames:
         print(filename)
-        text = read_file(dataset_dir + 'abstracts/' + filename)
-        filtered_text = filter_text(text)
         edge_features = read_edges(edgefeature_dir + filename)
-        vec_dict = read_vec(lvec_dir + filename)
-        edge_features_new = add_word_attr(filtered_text, edge_features, vec_dict, part='attr_freq')
+        edge_features_new = svec_maxsim(svec_matrix, edge_features)
         edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
-
-    # # add edgefeature: MaxSimC
-    # svec_type = 'stem'
-    # svec_path = './data/embedding/vec/shi/' + dataset + '_embedding_' + svec_type + '.vec'
-    # svec_matrix = read_svec(svec_path)
-    # for filename in filenames:
-    #     edge_features = read_edges(edgefeature_dir + filename)
-    #     edge_features_new = svec_maxsim(svec_matrix, edge_features)
-    #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+    
+    ########### temp code, delete later#########################
+    print('WWW')
+    dataset = 'WWW'
+    dataset_dir = './data/embedding/' + dataset + '/'
+    edgefeature_dir = dataset_dir + 'edge_features/'
+    filenames = read_file(dataset_dir + 'abstract_list').split(',')
+    svec_type = 'stem'
+    svec_path = './data/embedding/vec/shi/' + dataset + '_embedding_' + svec_type + '.vec'
+    svec_matrix = read_svec(svec_path)
+    for filename in filenames:
+        print(filename)
+        edge_features = read_edges(edgefeature_dir + filename)
+        edge_features_new = svec_maxsim(svec_matrix, edge_features)
+        edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+    ###################################################
 
     print('.......feature_extract_DONE........')
