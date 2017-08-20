@@ -284,6 +284,6 @@ if __name__ == "__main__":
     #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
     from ke_main import evaluate_extraction
-    evaluate_extraction(dataset, str(part), omega=[-1], phi=[88,0,0,12,0,0],damping=0.71)
+    evaluate_extraction(dataset, str(part), omega=[-1], phi='max', damping=0.85, alter_node=lvec_dir)
 
     print('.......feature_extract_DONE........')

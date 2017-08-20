@@ -27,6 +27,8 @@ def calc_weight(features, parameters):
         return 1
     elif parameters == [-1]:
         return features[-1]
+    elif parameters == 'max':
+        return max(features)
     else:
         return np.dot(features, parameters)
 
