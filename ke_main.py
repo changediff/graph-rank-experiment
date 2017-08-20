@@ -5,8 +5,8 @@ from ke_postprocess import get_phrases
 
 import os
 
-def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, omega=None, phi=None,
-                        alter_edge=None, alter_node=None):
+def evaluate_extraction(dataset, method_name, ngrams=2, damping=0.85, omega=None, phi=None,
+                        alter_topn=None, alter_edge=None, alter_node=None):
     """
     评价实验结果
 
@@ -19,6 +19,7 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
         edge_dir = './data/embedding/KDD/edge_features/'
         node_dir = './data/embedding/KDD/node_features/'
         file_names = read_file('./data/embedding/KDD/abstract_list').split(',')
+        topn = 4
     elif dataset == 'WWW':
         abstr_dir = './data/embedding/WWW/abstracts/'
         out_dir = './result/embedding/'
@@ -26,6 +27,7 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
         edge_dir = './data/embedding/WWW/edge_features/'
         node_dir = './data/embedding/WWW/node_features/'
         file_names = read_file('./data/embedding/WWW/abstract_list').split(',')
+        topn = 5
     else:
         print('wrong dataset name')
     if not os.path.exists(out_dir):
@@ -35,6 +37,8 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
         edge_dir = alter_edge
     if alter_node:
         node_dir = alter_node
+    if alter_topn:
+        topn = alter_topn
 
     count = 0
     gold_count = 0
@@ -44,7 +48,7 @@ def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, om
     recall_micro = 0
     for file_name in file_names:
         # print(file_name)
-        pr, graph = wpr(edge_dir+file_name, node_dir+file_name, omega=omega, phi=phi)
+        pr, graph = wpr(edge_dir+file_name, node_dir+file_name, omega=omega, phi=phi, d=damping)
 
         gold = read_file(gold_dir+file_name)
         keyphrases = get_phrases(pr, graph, abstr_dir, file_name, ng=ngrams)
@@ -100,4 +104,4 @@ if __name__ == "__main__":
     # phi: WWW[95,0,0,5,0,0], KDD[88,0,0,12,0,0]
     # kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/convert/'
     
-    evaluate_extraction('WWW', 'TextRank', topn=4, omega=[1,0,0], phi=[0])
+    evaluate_extraction('WWW', 'MIKE', omega=[1,1,3], phi=[0])

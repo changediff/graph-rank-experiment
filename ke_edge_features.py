@@ -97,7 +97,8 @@ def add_vec_sim(edge_features, vec_dict, sim_type='cos'):
     
     return edge_features
 
-def add_word_attr(filtered_text, edge_features, node_features, vec_dict, part=None):
+def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
+                  part=None, edge_para=None, node_para=None):
     """
     edge feature
     word attraction rank
@@ -119,31 +120,26 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict, part=No
         splited = filtered_text.split()
         freq1 = splited.count(edge[0])
         freq2 = splited.count(edge[1])
-        edge_count = edge_features[edge][0]
+        
         # 读不到的词向量设为全1
         default_vec = [1] * len(list(vec_dict.values())[0])
         vec1 = vec_dict.get(edge[0], default_vec)
         vec2 = vec_dict.get(edge[1], default_vec)
         distance = euc_distance(vec1, vec2)
 
-        if part == 'attr':
-            word_attr = attr(freq1, freq2, distance)
-        elif part == 'dice':
-            word_attr = dice(freq1, freq2, edge_count)
-        elif part == 'attr_freq':
+        if part == 'force*gx':
+            edge_count = edge_features[edge][0]
             word_attr = attr(freq1, freq2, distance) * edge_count
-        elif part == 'attr_cos':
-            distance = cosine_sim(vec1, vec2)
-            word_attr = attr(freq1, freq2, distance)
-        elif part == 'attr_tfidf':
-            freq1 = node_features[edge[0]][0]
-            freq2 = node_features[edge[1]][0]
-            word_attr = attr(freq1, freq2, distance)
-        elif part == 'attr_cos_tfidf':
-            distance = cosine_sim(vec1, vec2)
-            freq1 = node_features[edge[0]][0]
-            freq2 = node_features[edge[1]][0]
-            word_attr = attr(freq1, freq2, distance)
+        elif part == 'force*ctr':
+            edge_gx = edge_features[edge][:3]
+            edge_ctr = sum([i*j for i,j in zip(edge_gx,edge_para)])
+            word_attr = attr(freq1, freq2, distance) * edge_ctr
+        elif part == 'force*other':
+            edge_gx = edge_features[edge][:3]
+            edge_try = 1
+            for i in edge_gx:
+                edge_try *= i+1 
+            word_attr = attr(freq1, freq2, distance) * edge_try
         else:
             word_attr = attr(freq1, freq2, distance) * dice(freq1, freq2, edge_count)
 
@@ -219,7 +215,7 @@ def read_svec(path):
 
 if __name__ == "__main__":
 
-    dataset = 'KDD'
+    dataset = 'WWW'
     dataset_dir = './data/embedding/' + dataset + '/'
     edgefeature_dir = dataset_dir + 'edge_features/'
     nodefeature_dir = dataset_dir + 'node_features/'
@@ -250,11 +246,12 @@ if __name__ == "__main__":
         node_features = read_vec(nodefeature_dir + filename)
 
         # use single vec
-        lvec_type = 'WordWithTopic'
+        lvec_type = 'Word'
         lvec_dir = './data/embedding/vec/liu/data_8_11/' + lvec_type + '/' + dataset + '/'
         vec_dict = read_vec(lvec_dir + filename)
-        
-        edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict, part='attr_freq')
+        part = 'force*other'
+        edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict,
+                                          part=part, edge_para=[1,1,3])
         edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
 
@@ -287,6 +284,6 @@ if __name__ == "__main__":
     #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
     from ke_main import evaluate_extraction
-    evaluate_extraction(dataset, 'embedding', topn=4, omega=[-1], phi=[0])
+    evaluate_extraction(dataset, str(part), omega=[-1], phi=[88,0,0,12,0,0],damping=0.71)
 
     print('.......feature_extract_DONE........')
