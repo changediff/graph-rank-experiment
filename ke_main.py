@@ -7,7 +7,11 @@ import os
 
 def evaluate_extraction(dataset, method_name, topn=5, ngrams=2, damping=0.85, omega=None, phi=None,
                         alter_edge=None, alter_node=None):
-    """评价实验结果"""
+    """
+    评价实验结果
+
+    omega,phi, [0]代表不适用任何特征，权重设置为1。None为所有特征的简单加和。[-1]只用最后一个特征。
+    """
     if dataset == 'KDD':
         abstr_dir = './data/embedding/KDD/abstracts/'
         out_dir = './result/embedding/'
@@ -95,4 +99,5 @@ if __name__ == "__main__":
     # omega: WWW-113, KDD-233
     # phi: WWW[95,0,0,5,0,0], KDD[88,0,0,12,0,0]
     # kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/convert/'
-    evaluate_extraction('WWW', 'w2v', topn=4, omega=[0]*7+[1], phi=[0])
+    
+    evaluate_extraction('WWW', 'TextRank', topn=4, omega=[1,0,0], phi=[0])

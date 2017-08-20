@@ -28,14 +28,17 @@ def euc_distance(vec1, vec2):
         distance = 0.1
     return distance
 
-def read_vec(path):
+def read_vec(path, standard=True):
     """
     read vec: word, 1, 3, 4, ....
     """
     vec_dict = {}
     with open(path, encoding='utf-8') as file:
         # 标准csv使用','隔开，有的文件使用空格，所以要改变reader中的delimiter参数
-        table = csv.reader(file)
+        if standard:
+            table = csv.reader(file)
+        else:
+            table = csv.reader(file, delimiter=' ')
         for row in table:
             try:
                 vec_dict[row[0]] = list(float(i) for i in row[1:])
@@ -74,7 +77,7 @@ def edgefeatures_2file(path, edge_features):
         table.writerows(output)
 
 
-def lvec_to_feature(edge_features, vec_dict):
+def add_vec_sim(edge_features, vec_dict, sim_type='cos'):
     """
     edge feature
     求词向量的余弦相似度作为边特征
@@ -83,24 +86,18 @@ def lvec_to_feature(edge_features, vec_dict):
     # 此处为缺省向量，当数据集中读取不到对应的向量时取该值，不严谨，只是为了程序可以顺利运行
     default_vec = [1] * vec_lenth
 
-    # edges = []
-    # with open(edge_path, encoding='utf-8') as file:
-    #     table = csv.reader(file)
-    #     for row in table:
-    #         edges.append(row[:2])
-
-    # edge_cossim = []
-    # for edge in edges:
-    #     start_vec = vec_dict.get(edge[0], default_vec)
-    #     end_vec = vec_dict.get(edge[1], default_vec)
-    #     cossim = cosine_sim(start_vec, end_vec)
-    #     edge_cossim.append(edge+[cossim])
+    for edge in edge_features:
+        vec1 = vec_dict.get(edge[0], default_vec)
+        vec2 = vec_dict.get(edge[1], default_vec)
+        if sim_type == 'cos':
+            sim = cosine_sim(vec1, vec2)
+        elif sim_type == 'ed':
+            sim = euc_distance(vec1, vec2)
+        edge_features[edge].append(sim)
     
-    # with open(out_path, encoding='utf-8', mode='w') as file:
-    #     table = csv.writer(file)
-    #     table.writerows(edge_cossim)
+    return edge_features
 
-def add_word_attr(filtered_text, edge_features, vec_dict, part=None):
+def add_word_attr(filtered_text, edge_features, node_features, vec_dict, part=None):
     """
     edge feature
     word attraction rank
@@ -113,7 +110,7 @@ def add_word_attr(filtered_text, edge_features, vec_dict, part=None):
     """
     # 词向量的格式不统一，要想办法处理
     def attr(freq1, freq2, distance):
-        return freq1 * freq1 / (distance * distance)
+        return freq1 * freq2 / (distance * distance)
 
     def dice(freq1, freq2, edge_count):
         return 2 * edge_count / (freq1 * freq2)
@@ -123,8 +120,8 @@ def add_word_attr(filtered_text, edge_features, vec_dict, part=None):
         freq1 = splited.count(edge[0])
         freq2 = splited.count(edge[1])
         edge_count = edge_features[edge][0]
-        # 读不到的词向量设为全0
-        default_vec = [0] * len(list(vec_dict.values())[0])
+        # 读不到的词向量设为全1
+        default_vec = [1] * len(list(vec_dict.values())[0])
         vec1 = vec_dict.get(edge[0], default_vec)
         vec2 = vec_dict.get(edge[1], default_vec)
         distance = euc_distance(vec1, vec2)
@@ -135,6 +132,18 @@ def add_word_attr(filtered_text, edge_features, vec_dict, part=None):
             word_attr = dice(freq1, freq2, edge_count)
         elif part == 'attr_freq':
             word_attr = attr(freq1, freq2, distance) * edge_count
+        elif part == 'attr_cos':
+            distance = cosine_sim(vec1, vec2)
+            word_attr = attr(freq1, freq2, distance)
+        elif part == 'attr_tfidf':
+            freq1 = node_features[edge[0]][0]
+            freq2 = node_features[edge[1]][0]
+            word_attr = attr(freq1, freq2, distance)
+        elif part == 'attr_cos_tfidf':
+            distance = cosine_sim(vec1, vec2)
+            freq1 = node_features[edge[0]][0]
+            freq2 = node_features[edge[1]][0]
+            word_attr = attr(freq1, freq2, distance)
         else:
             word_attr = attr(freq1, freq2, distance) * dice(freq1, freq2, edge_count)
 
@@ -213,6 +222,7 @@ if __name__ == "__main__":
     dataset = 'KDD'
     dataset_dir = './data/embedding/' + dataset + '/'
     edgefeature_dir = dataset_dir + 'edge_features/'
+    nodefeature_dir = dataset_dir + 'node_features/'
     filenames = read_file(dataset_dir + 'abstract_list').split(',')
 
     # # add edgefeature: google news vector cossine similarity
@@ -226,42 +236,57 @@ if __name__ == "__main__":
     #     edge_features_new = google_news_sim(text, edge_features, newsvec_model)
     #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
+
     # # add edgefeature: word attraction rank
-    # lvec_type = 'WordWithTopic'
-    # lvec_dir = './data/embedding/vec/liu/data_8_11/' + lvec_type + '/' + dataset + '/'
+
+    # # use general vec
+    # vec_dict = read_vec('./data/embedding/vec/liu/word_vec')
+
+    for filename in filenames:
+        print(filename)
+        text = read_file(dataset_dir + 'abstracts/' + filename)
+        filtered_text = filter_text(text)
+        edge_features = read_edges(edgefeature_dir + filename)
+        node_features = read_vec(nodefeature_dir + filename)
+
+        # use single vec
+        lvec_type = 'WordWithTopic'
+        lvec_dir = './data/embedding/vec/liu/data_8_11/' + lvec_type + '/' + dataset + '/'
+        vec_dict = read_vec(lvec_dir + filename)
+        
+        edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict, part='attr_freq')
+        edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+
+
+    # # add edgefeature: MaxSimC
+    # svec_type = 'stem'
+    # svec_path = './data/embedding/vec/shi/' + dataset + '_embedding_' + svec_type + '.vec'
+    # svec_matrix = read_svec(svec_path)
     # for filename in filenames:
     #     print(filename)
-    #     text = read_file(dataset_dir + 'abstracts/' + filename)
-    #     filtered_text = filter_text(text)
     #     edge_features = read_edges(edgefeature_dir + filename)
-    #     vec_dict = read_vec(lvec_dir + filename)
-    #     edge_features_new = add_word_attr(filtered_text, edge_features, vec_dict, part='attr_freq')
+    #     edge_features_new = svec_maxsim(svec_matrix, edge_features)
     #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
-    # add edgefeature: MaxSimC
-    svec_type = 'stem'
-    svec_path = './data/embedding/vec/shi/' + dataset + '_embedding_' + svec_type + '.vec'
-    svec_matrix = read_svec(svec_path)
-    for filename in filenames:
-        print(filename)
-        edge_features = read_edges(edgefeature_dir + filename)
-        edge_features_new = svec_maxsim(svec_matrix, edge_features)
-        edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
-    
-    ########### temp code, delete later#########################
-    print('WWW')
-    dataset = 'WWW'
-    dataset_dir = './data/embedding/' + dataset + '/'
-    edgefeature_dir = dataset_dir + 'edge_features/'
-    filenames = read_file(dataset_dir + 'abstract_list').split(',')
-    svec_type = 'stem'
-    svec_path = './data/embedding/vec/shi/' + dataset + '_embedding_' + svec_type + '.vec'
-    svec_matrix = read_svec(svec_path)
-    for filename in filenames:
-        print(filename)
-        edge_features = read_edges(edgefeature_dir + filename)
-        edge_features_new = svec_maxsim(svec_matrix, edge_features)
-        edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
-    ###################################################
+
+    # # add edgefeature: lvec cossine similarity
+    # # use general vec
+    # lvecg_path = './data/embedding/vec/liu/word_vec'
+    # vec_dict = read_vec(lvecg_path)
+
+    # # vec_type = 'WordWithTopic'
+    # # lvecs_dir = './data/embedding/vec/liu/data_8_11/' + vec_type + '/' + dataset + '/'
+    # for filename in filenames:
+    #     print(filename)
+
+    #     # # use single file vec
+    #     # vec_dict = read_vec(lvecs_dir+filename)
+
+    #     edge_features = read_edges(edgefeature_dir + filename)
+    #     edge_features_new = add_vec_sim(edge_features, vec_dict, sim_type='ed')
+    #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+
+    from ke_main import evaluate_extraction
+    evaluate_extraction(dataset, 'embedding', topn=4, omega=[-1], phi=[0])
 
     print('.......feature_extract_DONE........')
