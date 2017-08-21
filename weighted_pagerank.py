@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-import csv, sys, getopt
+import csv, sys, getopt, math
 
 def read_nodes_features(path):
     """从csv文件中读取特征"""
@@ -29,6 +29,16 @@ def calc_weight(features, parameters):
         return features[-1]
     elif parameters == 'max':
         return max(features)
+    elif parameters == 'multiply':
+        weight = 1
+        for f in features:
+            weight *= f + 1
+        return weight
+    elif parameters == 'exp':
+        weight = 0
+        for f in features:
+            weight += math.e ** f
+        return weight
     else:
         return np.dot(features, parameters)
 

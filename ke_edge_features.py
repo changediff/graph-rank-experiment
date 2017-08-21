@@ -140,6 +140,7 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
             for i in edge_gx:
                 edge_try *= i+1 
             word_attr = attr(freq1, freq2, distance) * edge_try
+            # word_attr = edge_try
         else:
             word_attr = attr(freq1, freq2, distance) * dice(freq1, freq2, edge_count)
 
@@ -215,7 +216,7 @@ def read_svec(path):
 
 if __name__ == "__main__":
 
-    dataset = 'WWW'
+    dataset = 'KDD'
     dataset_dir = './data/embedding/' + dataset + '/'
     edgefeature_dir = dataset_dir + 'edge_features/'
     nodefeature_dir = dataset_dir + 'node_features/'
@@ -284,6 +285,6 @@ if __name__ == "__main__":
     #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
     from ke_main import evaluate_extraction
-    evaluate_extraction(dataset, str(part), omega=[-1], phi='max', damping=0.85, alter_node=lvec_dir)
+    evaluate_extraction(dataset, str(part), omega=[-1], phi='multiply', damping=0.71, alter_node=None)
 
     print('.......feature_extract_DONE........')
