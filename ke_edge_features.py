@@ -98,7 +98,7 @@ def add_vec_sim(edge_features, vec_dict, sim_type='cos'):
     return edge_features
 
 def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
-                  part=None, edge_para=None, node_para=None):
+                  part=None, edge_para=None, node_para=None, **kwargs):
     """
     edge feature
     word attraction rank
@@ -110,11 +110,37 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
             vec_dict, 
     """
     # 词向量的格式不统一，要想办法处理
-    def attr(freq1, freq2, distance):
+    def force(freq1, freq2, distance):
         return freq1 * freq2 / (distance * distance)
 
     def dice(freq1, freq2, edge_count):
         return 2 * edge_count / (freq1 * freq2)
+    
+    # 统计force和共现次数的总和，以便标准化
+    if '+' in part:
+        edge_force = {}
+        edge_ctr = {}
+        force_sum = 0
+        count_sum = 0
+        ctr_sum = 0
+        for edge in edge_features:
+            splited = filtered_text.split()
+            freq1 = splited.count(edge[0])
+            freq2 = splited.count(edge[1])
+
+            default_vec = [1] * len(list(vec_dict.values())[0])
+            vec1 = vec_dict.get(edge[0], default_vec)
+            vec2 = vec_dict.get(edge[1], default_vec)
+            distance = euc_distance(vec1, vec2)
+            attraction_force = force(freq1, freq2, distance)
+            edge_force[edge] = attraction_force
+            force_sum += attraction_force
+            count_sum += edge_features[edge][0]
+
+            edge_gx = edge_features[edge][:3]
+            ctr = sum([i*j for i,j in zip(edge_gx,edge_para)])
+            edge_ctr[edge] = ctr
+            ctr_sum += ctr
 
     for edge in edge_features:
         splited = filtered_text.split()
@@ -129,20 +155,27 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
 
         if part == 'force*gx':
             edge_count = edge_features[edge][0]
-            word_attr = attr(freq1, freq2, distance) * edge_count
+            word_attr = force(freq1, freq2, distance) * edge_count
+        elif part == 'force+gx':
+            edge_count = edge_features[edge][0]
+            part_weight = kwargs['part_weight']
+            word_attr = part_weight * edge_force[edge] / force_sum + (1 - part_weight) * edge_count /count_sum
         elif part == 'force*ctr':
             edge_gx = edge_features[edge][:3]
-            edge_ctr = sum([i*j for i,j in zip(edge_gx,edge_para)])
-            word_attr = attr(freq1, freq2, distance) * edge_ctr
+            ctr = sum([i*j for i,j in zip(edge_gx,edge_para)])
+            word_attr = force(freq1, freq2, distance) * ctr
+        elif part == 'force+ctr':
+            part_weight = kwargs['part_weight']
+            word_attr = part_weight * edge_force[edge] / force_sum + (1 - part_weight) * edge_ctr[edge] /ctr_sum
         elif part == 'force*other':
             edge_gx = edge_features[edge][:3]
             edge_try = 1
             for i in edge_gx:
                 edge_try *= i+1 
-            word_attr = attr(freq1, freq2, distance) * edge_try
+            word_attr = force(freq1, freq2, distance) * edge_try
             # word_attr = edge_try
         else:
-            word_attr = attr(freq1, freq2, distance) * dice(freq1, freq2, edge_count)
+            word_attr = force(freq1, freq2, distance) * dice(freq1, freq2, edge_count)
 
         edge_features[edge].append(word_attr)
 
@@ -214,8 +247,8 @@ def read_svec(path):
                 svec_matrix[word] = [[float(x) for x in row[1:-1]]]
         return svec_matrix
 
-if __name__ == "__main__":
-
+# if __name__ == "__main__":
+def main(part_weight):
     dataset = 'KDD'
     dataset_dir = './data/embedding/' + dataset + '/'
     edgefeature_dir = dataset_dir + 'edge_features/'
@@ -235,7 +268,7 @@ if __name__ == "__main__":
 
 
     # # add edgefeature: word attraction rank
-
+    part = 'force+ctr'
     # # use general vec
     # vec_dict = read_vec('./data/embedding/vec/liu/word_vec')
 
@@ -250,9 +283,9 @@ if __name__ == "__main__":
         lvec_type = 'Word'
         lvec_dir = './data/embedding/vec/liu/data_8_11/' + lvec_type + '/' + dataset + '/'
         vec_dict = read_vec(lvec_dir + filename)
-        part = 'force*other'
+
         edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict,
-                                          part=part, edge_para=[1,1,3])
+                                          part=part, edge_para=[1,1,3], part_weight=part_weight)
         edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
 
@@ -285,6 +318,10 @@ if __name__ == "__main__":
     #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
 
     from ke_main import evaluate_extraction
-    evaluate_extraction(dataset, str(part), omega=[-1], phi='multiply', damping=0.71, alter_node=None)
+    evaluate_extraction(dataset, str(part), omega=[-1], phi=[0], damping=0.85, alter_node=None)
 
     print('.......feature_extract_DONE........')
+
+if __name__=="__main__":
+    for part_weight in range(1, 10):
+        main(part_weight/10)
