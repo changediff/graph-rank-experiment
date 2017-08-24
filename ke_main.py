@@ -104,4 +104,4 @@ if __name__ == "__main__":
     # phi: WWW[95,0,0,5,0,0], KDD[88,0,0,12,0,0]
     # kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/convert/'
     
-    evaluate_extraction('WWW', 'MIKE', omega=[1,1,3], phi=[0])
+    evaluate_extraction('KDD', 'MIKE', omega=[2,3,3], phi=[88,12])

@@ -21,6 +21,7 @@ def read_edges_features(path):
             features[tuple(row[:2])] = [float(feature) for feature in row[2:]]
     return features
 
+# calc_weight需要仔细考虑如何实现，需要做功能拆分吗？
 def calc_weight(features, parameters):
     """利用特征和参数计算权重，暂采用简单的线性加和"""
     if all(p==0 for p in parameters):
@@ -29,7 +30,8 @@ def calc_weight(features, parameters):
         return features[-1]
     elif parameters == 'max':
         return max(features)
-    elif parameters == 'multiply':
+    elif (parameters == 'multiply' or
+          parameters == '*'):
         weight = 1
         for f in features:
             weight *= f + 1
@@ -39,6 +41,8 @@ def calc_weight(features, parameters):
         for f in features:
             weight += math.e ** f
         return weight
+    elif type(parameters) == list and '*' == parameters[-1]:
+        return np.dot(features[:2], parameters[:2]) * features[-1]
     else:
         return np.dot(features, parameters)
 

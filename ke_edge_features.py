@@ -31,6 +31,7 @@ def euc_distance(vec1, vec2):
 def read_vec(path, standard=True):
     """
     read vec: word, 1, 3, 4, ....
+    return word:[1,...] dict
     """
     vec_dict = {}
     with open(path, encoding='utf-8') as file:
@@ -67,7 +68,7 @@ def text2_stem_dict(text_notag):
         stem_dict[normalized_token(word)] = word
     return stem_dict
 
-def edgefeatures_2file(path, edge_features):
+def edgefeatures2file(path, edge_features):
     output = []
     for edge in edge_features:
         output.append(list(edge) + edge_features[edge])
@@ -264,7 +265,7 @@ def main(part_weight):
     #     edge_features = read_edges(edgefeature_dir + filename)
     #     text = read_file(dataset_dir + 'abstracts/' + filename)
     #     edge_features_new = google_news_sim(text, edge_features, newsvec_model)
-    #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+    #     edgefeatures2file(edgefeature_dir+filename, edge_features_new)
 
 
     # # add edgefeature: word attraction rank
@@ -286,7 +287,7 @@ def main(part_weight):
 
         edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict,
                                           part=part, edge_para=[1,1,3], part_weight=part_weight)
-        edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+        edgefeatures2file(edgefeature_dir+filename, edge_features_new)
 
 
     # # add edgefeature: MaxSimC
@@ -297,7 +298,7 @@ def main(part_weight):
     #     print(filename)
     #     edge_features = read_edges(edgefeature_dir + filename)
     #     edge_features_new = svec_maxsim(svec_matrix, edge_features)
-    #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+    #     edgefeatures2file(edgefeature_dir+filename, edge_features_new)
 
 
     # # add edgefeature: lvec cossine similarity
@@ -315,7 +316,7 @@ def main(part_weight):
 
     #     edge_features = read_edges(edgefeature_dir + filename)
     #     edge_features_new = add_vec_sim(edge_features, vec_dict, sim_type='ed')
-    #     edgefeatures_2file(edgefeature_dir+filename, edge_features_new)
+    #     edgefeatures2file(edgefeature_dir+filename, edge_features_new)
 
     from ke_main import evaluate_extraction
     evaluate_extraction(dataset, str(part), omega=[-1], phi=[0], damping=0.85, alter_node=None)

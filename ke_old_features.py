@@ -159,17 +159,17 @@ def save_node_features(file_name, data_dir, node_features):
 
 if __name__ == "__main__":
     # 计算生成经典特征
-    data_dir = './data/embedding/WWW/' #计算WWW数据集将此行中'KDD'替换为'WWW'
+    data_dir = './data/embedding/KDD/' #计算WWW数据集将此行中'KDD'替换为'WWW'
     file_names = read_file(data_dir+'abstract_list').split(',')
     for file_name in file_names:
         print(file_name)
         filtered_text = filter_text(read_file(data_dir+'abstracts/'+file_name))
 
-        # 计算保存边特征，分别为：共现次数，被引文献共现次数，引用文献共现次数
-        edge_freq = get_edge_freq(filtered_text, window=2)
-        cited_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'cited', window=2)
-        citing_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'citing', window=2)
-        save_edge_features(file_name, data_dir, edge_freq, cited_edge_freq, citing_edge_freq)
+        # # 计算保存边特征，分别为：共现次数，被引文献共现次数，引用文献共现次数
+        # edge_freq = get_edge_freq(filtered_text, window=2)
+        # cited_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'cited', window=2)
+        # citing_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'citing', window=2)
+        # save_edge_features(file_name, data_dir, edge_freq, cited_edge_freq, citing_edge_freq)
 
         # 读取点的特征，保存为需要的格式
         node_list = filtered_text.split()
