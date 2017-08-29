@@ -2,6 +2,8 @@
 
 import os
 import csv
+
+from os import path
 from ke_preprocess import read_file, filter_text
 from ke_edge_features import read_vec
 
@@ -42,11 +44,11 @@ def add_lda_prob(filename, filtered_text, ldadir, nodefeatures):
                 i += 1
         return vecs
     
-    doc_tvecs = topic_vec(os.path.join(ldadir, 'doc_topic.csv'))
-    word_tvecs = topic_vec(os.path.join(ldadir, 'word_topic.csv'))
+    doc_tvecs = topic_vec(path.join(ldadir, 'doc_topic.csv'))
+    word_tvecs = topic_vec(path.join(ldadir, 'word_topic.csv'))
 
-    doc2id = doc2id_dict(os.path.join(ldadir, 'docmap.txt'))
-    word2id = word2id_dict(os.path.join(ldadir,'wordmap.txt'))
+    doc2id = doc2id_dict(path.join(ldadir, '..', 'docmap.txt'))
+    word2id = word2id_dict(path.join(ldadir,'wordmap.txt'))
 
     doc_tvec = doc_tvecs[doc2id[filename]]
 
@@ -69,25 +71,34 @@ def nodefeatures2file(nodefeatures, path):
         f_csv = csv.writer(f)
         f_csv.writerows(output)
 
-if __name__ == "__main__":
-
+def main(topic, text_type):
     dataset = 'KDD'
-    topic_num = '100'
+    # topic_num = '100'
+    topic_num = topic
 
-    dataset_dir = './data/embedding/' + dataset + '/'
-    # edgefeature_dir = dataset_dir + 'edge_features/'
-    nodefeature_dir = dataset_dir + 'node_features/'
-    filenames = read_file(dataset_dir + 'abstract_list').split(',')
+    dataset_dir = path.join('./data/embedding/', dataset)
+    # edgefeature_dir = path.join(dataset_dir, 'edge_features')
+    nodefeature_dir = path.join(dataset_dir, 'node_features')
+    filenames = read_file(path.join(dataset_dir, 'abstract_list')).split(',')
 
-    ldadir = './data/embedding/data_lda/' + dataset + '_' + topic_num
+    ldadir = path.join('./data/embedding/data_lda/', text_type, dataset+'_'+topic_num)
 
     for filename in filenames:
         print(filename)
-        filtered_text = filter_text(read_file(os.path.join(dataset_dir, 'abstracts', filename)))
-        nodefeatures = read_vec(os.path.join(nodefeature_dir, filename))
+        filtered_text = filter_text(read_file(path.join(dataset_dir, 'abstracts', filename)))
+        nodefeatures = read_vec(path.join(nodefeature_dir, filename))
         nodefeatures_new = add_lda_prob(filename, filtered_text, ldadir, nodefeatures)
-        nodefeatures2file(nodefeatures_new, os.path.join(nodefeature_dir, filename))
+        nodefeatures2file(nodefeatures_new, path.join(nodefeature_dir, filename))
     print('.......node_features_DONE........')
 
     from ke_main import evaluate_extraction
-    evaluate_extraction(dataset, 'mike'+topic_num, omega=[2,3,3], phi=[88,12,'*'], damping=0.85, alter_node=None)
+    evaluate_extraction(dataset, 'textrank-topic'+topic_num+text_type, omega=[1,0,0], phi=[-1], damping=0.85, alter_node=None)
+
+if __name__ == "__main__":
+    topics = list(range(1,20))
+    text_types = ['data_abstract', 'data_agrateAll']
+    for text_type in text_types[:1]:
+        if text_type == 'data_agrateAll':
+            topics = range(1,11)
+        for t in topics:
+            main(str(t), text_type)

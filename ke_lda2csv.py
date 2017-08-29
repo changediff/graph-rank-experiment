@@ -25,7 +25,7 @@ def word_topic(in_path, out_path):
 
 if __name__=="__main__":
 
-    ldahome = './data/embedding/data_lda/'
+    ldahome = './data/embedding/data_lda/data_abstract'
     dirnames = [name for name in os.listdir(ldahome)
                 if os.path.isdir(os.path.join(ldahome, name))]
 
