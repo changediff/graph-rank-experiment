@@ -98,6 +98,72 @@ def add_vec_sim(edge_features, vec_dict, sim_type='cos'):
     
     return edge_features
 
+def google_news_sim(text, edge_features, vec_model):
+    """
+    edge feature
+    return similarity of word vectors trained by google news
+
+    params: text, string read from dataset
+            edge_features, a (node1, node2):[feature1, feature2] dict read from old_features
+            vec_model, gensim vec models
+    """
+    text_notag = rm_tags(text)
+    stem_dict = text2_stem_dict(text_notag)
+
+    for edge in edge_features:
+        word1 = stem_dict.get(edge[0], edge[0])
+        word2 = stem_dict.get(edge[1], edge[1])
+        try:
+            sim = vec_model.wv.similarity(word1, word2)
+        except:
+            sim = 0.01
+        edge_features[edge].append(sim)
+
+    return edge_features
+
+def svec_maxsim(svec_matrix, edge_features, stem_dict=None):
+    """
+    return MaxSimC edge feature
+
+    :param svec_matrix: a word_stemed:vec_matrix dict
+    :param edge_features: a word:feature_list dict
+    :stem_dict: a word:original_word dict
+    """
+    def trans_word(word, stem_dict=stem_dict):
+        if stem_dict == None:
+            return word
+        else:
+            return stem_dict[word]
+    
+    # default vector, need modefy later
+    default_matrix = [[1] * 300] * 10
+
+    for edge in edge_features:
+        sims = []
+        for vec1 in svec_matrix.get(trans_word(edge[0]), default_matrix):
+            for vec2 in svec_matrix.get(trans_word(edge[1]), default_matrix):
+                sims.append(cosine_sim(vec1, vec2))
+        edge_features[edge].append(max(sims))
+    return edge_features
+
+def read_svec(path):
+    """
+    return svec_matrix dict
+
+    :param path: svec path
+    """
+    with open(path) as file:
+        table = csv.reader(file, delimiter=' ')
+        next(table)
+        svec_matrix = {}
+        for row in table:
+            word = row[0].split('#')[0]
+            if svec_matrix.get(word, None):
+                svec_matrix[word] += [[float(x) for x in row[1:-1]]]
+            else:
+                svec_matrix[word] = [[float(x) for x in row[1:-1]]]
+        return svec_matrix
+
 def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
                   part=None, edge_para=None, node_para=None, **kwargs):
     """
@@ -181,72 +247,6 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
         edge_features[edge].append(word_attr)
 
     return edge_features
-
-def google_news_sim(text, edge_features, vec_model):
-    """
-    edge feature
-    return similarity of word vectors trained by google news
-
-    params: text, string read from dataset
-            edge_features, a (node1, node2):[feature1, feature2] dict read from old_features
-            vec_model, gensim vec models
-    """
-    text_notag = rm_tags(text)
-    stem_dict = text2_stem_dict(text_notag)
-
-    for edge in edge_features:
-        word1 = stem_dict.get(edge[0], edge[0])
-        word2 = stem_dict.get(edge[1], edge[1])
-        try:
-            sim = vec_model.wv.similarity(word1, word2)
-        except:
-            sim = 0.01
-        edge_features[edge].append(sim)
-
-    return edge_features
-
-def svec_maxsim(svec_matrix, edge_features, stem_dict=None):
-    """
-    return MaxSimC edge feature
-
-    :param svec_matrix: a word_stemed:vec_matrix dict
-    :param edge_features: a word:feature_list dict
-    :stem_dict: a word:original_word dict
-    """
-    def trans_word(word, stem_dict=stem_dict):
-        if stem_dict == None:
-            return word
-        else:
-            return stem_dict[word]
-    
-    # default vector, need modefy later
-    default_matrix = [[1] * 300] * 10
-
-    for edge in edge_features:
-        sims = []
-        for vec1 in svec_matrix.get(trans_word(edge[0]), default_matrix):
-            for vec2 in svec_matrix.get(trans_word(edge[1]), default_matrix):
-                sims.append(cosine_sim(vec1, vec2))
-        edge_features[edge].append(max(sims))
-    return edge_features
-
-def read_svec(path):
-    """
-    return svec_matrix dict
-
-    :param path: svec path
-    """
-    with open(path) as file:
-        table = csv.reader(file, delimiter=' ')
-        next(table)
-        svec_matrix = {}
-        for row in table:
-            word = row[0].split('#')[0]
-            if svec_matrix.get(word, None):
-                svec_matrix[word] += [[float(x) for x in row[1:-1]]]
-            else:
-                svec_matrix[word] = [[float(x) for x in row[1:-1]]]
-        return svec_matrix
 
 # if __name__ == "__main__":
 def main(part_weight):

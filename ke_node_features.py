@@ -5,7 +5,7 @@ import csv
 
 from os import path
 from ke_preprocess import read_file, filter_text
-from ke_edge_features import read_vec
+from ke_edge_features import read_vec, cosine_sim
 
 def add_lda_prob(filename, filtered_text, ldadir, nodefeatures):
     """
@@ -62,6 +62,21 @@ def add_lda_prob(filename, filtered_text, ldadir, nodefeatures):
 
     return nodefeatures
 
+def add_worddocsim(text, vec_dict, nodefeatures):
+
+    veclen = len(list(vec_dict.values())[0])
+    default_vec = [0] * veclen
+
+    vec_matrix = [vec_dict.get(word, default_vec) for word in text.split()]
+    doc_vec = list(map(sum, zip(*vec_matrix)))
+
+    default_vec = [1] * veclen
+    for node in nodefeatures:
+        nodefeatures[node].append(cosine_sim(vec_dict.get(node, default_vec), doc_vec))
+    
+    return nodefeatures
+        
+
 def nodefeatures2file(nodefeatures, path):
     output = []
     for node in nodefeatures:
@@ -71,34 +86,46 @@ def nodefeatures2file(nodefeatures, path):
         f_csv = csv.writer(f)
         f_csv.writerows(output)
 
-def main(topic, text_type):
+if __name__ == "__main__":
     dataset = 'KDD'
-    # topic_num = '100'
-    topic_num = topic
 
     dataset_dir = path.join('./data/embedding/', dataset)
     # edgefeature_dir = path.join(dataset_dir, 'edge_features')
     nodefeature_dir = path.join(dataset_dir, 'node_features')
     filenames = read_file(path.join(dataset_dir, 'abstract_list')).split(',')
+    vecdir = path.join('./data/embedding/vec/liu/data_8_11/Word', dataset)
 
-    ldadir = path.join('./data/embedding/data_lda/', text_type, dataset+'_'+topic_num)
+    # # 主题概率作为点特征
+    # topic_num = topic
+    # ldadir = path.join('./data/embedding/data_lda/', text_type, dataset+'_'+topic_num)
 
     for filename in filenames:
         print(filename)
+
+        
         filtered_text = filter_text(read_file(path.join(dataset_dir, 'abstracts', filename)))
         nodefeatures = read_vec(path.join(nodefeature_dir, filename))
-        nodefeatures_new = add_lda_prob(filename, filtered_text, ldadir, nodefeatures)
+
+        # # 主题概率作为点特征
+        # nodefeatures_new = add_lda_prob(filename, filtered_text, ldadir, nodefeatures)
+        
+        # 词与文章相似度作为点特征
+        vec_dict = read_vec(path.join(vecdir, filename))
+        nodefeatures_new = add_worddocsim(filtered_text, vec_dict, nodefeatures)
+
         nodefeatures2file(nodefeatures_new, path.join(nodefeature_dir, filename))
+
     print('.......node_features_DONE........')
 
     from ke_main import evaluate_extraction
-    evaluate_extraction(dataset, 'textrank-topic'+topic_num+text_type, omega=[1,0,0], phi=[-1], damping=0.85, alter_node=None)
+    evaluate_extraction(dataset, 'textrank-docsim',
+                        omega=[1,0,0], phi=[-1], damping=0.85, alter_node=None)
 
-if __name__ == "__main__":
-    topics = list(range(1,20))
-    text_types = ['data_abstract', 'data_agrateAll']
-    for text_type in text_types[:1]:
-        if text_type == 'data_agrateAll':
-            topics = range(1,11)
-        for t in topics:
-            main(str(t), text_type)
+# if __name__ == "__main__":
+    # topics = list(range(1,20))
+    # text_types = ['data_abstract', 'data_agrateAll']
+    # for text_type in text_types[:1]:
+    #     if text_type == 'data_agrateAll':
+    #         topics = range(1,11)
+    #     for t in topics:
+    #         main(str(t), text_type)
