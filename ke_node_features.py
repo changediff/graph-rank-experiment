@@ -75,7 +75,6 @@ def add_worddocsim(text, vec_dict, nodefeatures):
         nodefeatures[node].append(cosine_sim(vec_dict.get(node, default_vec), doc_vec))
     
     return nodefeatures
-        
 
 def nodefeatures2file(nodefeatures, path):
     output = []

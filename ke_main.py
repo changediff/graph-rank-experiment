@@ -103,5 +103,7 @@ if __name__ == "__main__":
     # omega: WWW-113, KDD-233
     # phi: WWW[95,0,0,5,0,0], KDD[88,0,0,12,0,0]
     # kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/convert/'
-    
-    evaluate_extraction('KDD', 'MIKE', omega=[2,3,3], phi=[88,12])
+    # evaluate_extraction('KDD', 'MIKE', omega=[2,3,3], phi=[88,12])
+
+    vec_path = "./data/embedding/vec/liu/data_8_11/Word/WWW/"
+    evaluate_extraction('WWW', 'multiplyf', omega=[-1], phi='*', damping=0.7, alter_node=None)

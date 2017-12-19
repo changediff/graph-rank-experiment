@@ -1,10 +1,12 @@
 # coding:utf-8
-from os import path
 
-vecpath = path.join('./data/embedding/vec/liu/data_8_11/Word', 'KDD', '10201458')
+output = [['increment', 'quantil', 1.0, 0.0, 0.0, 1501.8020277777268], 
+          ['estim', 'quantil', 1.0, 0.891659080982, 0.0, 1254.121972541718], 
+          ['estim', 'massiv', 1.0, 0.0, 0.0, 1092.1359180938769], 
+          ['massiv', 'track', 1.0, 0.0, 0.0, 1443.5186982349112]]
 
-from ke_edge_features import read_vec
+import csv
 
-vec = read_vec(vecpath)
-
-print(len(list(vec.values())[0]))
+with open('./test_csv.csv', 'w') as file:
+    table = csv.writer(file)
+    table.writerows(output)

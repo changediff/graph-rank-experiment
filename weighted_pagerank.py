@@ -24,7 +24,7 @@ def read_edges_features(path):
 # calc_weight需要仔细考虑如何实现，需要做功能拆分吗？
 def calc_weight(features, parameters):
     """利用特征和参数计算权重，暂采用简单的线性加和"""
-    if all(p==0 for p in parameters):
+    if parameters == '1':
         return 1
     elif parameters == [-1]:
         return features[-1]
@@ -41,8 +41,10 @@ def calc_weight(features, parameters):
         for f in features:
             weight += math.e ** f
         return weight
-    elif type(parameters) == list and '*' == parameters[-1]:
-        return np.dot(features[:2], parameters[:2]) * features[-1]
+    elif parameters == 'tfidf':
+        return features[0]
+    elif parameters == 'sum':
+        return sum(features)
     else:
         return np.dot(features, parameters)
 
