@@ -73,7 +73,8 @@ def evaluate_extraction(dataset, method_name, ngrams=2, damping=0.85, omega=None
             mrr += 1/(position[0]+1)
         gold_count += len(golds)
         extract_count += len(top_phrases)
-        prcs_micro += count_micro / len(top_phrases)
+        if len(top_phrases) != 0:
+            prcs_micro += count_micro / len(top_phrases)
         recall_micro += count_micro / len(golds)
         # 记录每个文档关键词提取的详细结果
         # prcs_single = count_micro / len(top_phrases)

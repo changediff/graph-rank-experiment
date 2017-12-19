@@ -255,13 +255,18 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
 def main(part_weight):
 
     dataset = 'KDD'
-    vec_type = 'total'
-    part = 'attr'
+    vec_type = 'separate'
+    part = 'force*gxs'
 
     dataset_dir = './data/embedding/' + dataset + '/'
     edgefeature_dir = dataset_dir + 'edge_features/'
     nodefeature_dir = dataset_dir + 'node_features/'
     filenames = read_file(dataset_dir + 'abstract_list').split(',')
+
+    if vec_type == 'total' and dataset == 'KDD':
+        vec_dict = read_vec('./data/embedding/vec/kdd.words.emb0.119')
+    elif vec_type == 'total' and dataset == 'WWW':
+        vec_dict = read_vec('./data/embedding/vec/WWW0.128')
 
     for filename in filenames:
         print(filename)
@@ -274,19 +279,14 @@ def main(part_weight):
         lvec_dir = './data/embedding/vec/liu/data_8_11/' + lvec_type + '/' + dataset + '/'
         if vec_type == 'separate':
             vec_dict = read_vec(lvec_dir + filename)
-        elif vec_type == 'total' and dataset == 'KDD':
-            vec_dict = read_vec('./data/embedding/vec/kdd.words.emb0.119')
-        elif vec_type == 'total' and dataset == 'WWW':
-            vec_dict = read_vec('./data/embedding/vec/WWW0.128')
-        else:
-            raise "wrong data path"
+
 
         edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict,
                                           part=part, edge_para=[1,1,3], part_weight=part_weight)
         edgefeatures2file(edgefeature_dir+filename, edge_features_new)
 
     from ke_main import evaluate_extraction
-    evaluate_extraction(dataset, str(part), omega=[-1], phi='1', damping=0.85, alter_node=None)
+    evaluate_extraction(dataset, str(part), omega=[-1], phi='*', damping=0.71, alter_node=None)
 
     print('.......feature_extract_DONE........')
 
