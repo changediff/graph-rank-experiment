@@ -181,16 +181,22 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
 
     def dice(freq1, freq2, edge_count):
         return 2 * edge_count / (freq1 + freq2)
+
+    def pmi(freq1, freq2, edge_count, freq_sum, edge_count_sum):
+        return math.log((edge_count / edge_count_sum) / 
+                        ((freq1 / freq_sum) * (freq2 / freq_sum)))
     
-    # 统计force和共现次数的总和，以便标准化
-    if '+' in part:
+    splited = filtered_text.split()
+    freq_sum = len(splited)
+
+    # 统计force、共现次数的总和、总词数、边数，以便标准化
+    if 'pmi' in part or 'ctr' in part:
         edge_force = {}
         edge_ctr = {}
         force_sum = 0
-        count_sum = 0
+        edge_count_sum = 0
         ctr_sum = 0
         for edge in edge_features:
-            splited = filtered_text.split()
             freq1 = splited.count(edge[0])
             freq2 = splited.count(edge[1])
 
@@ -201,7 +207,7 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
             attraction_force = force(freq1, freq2, distance)
             edge_force[edge] = attraction_force
             force_sum += attraction_force
-            count_sum += edge_features[edge][0]
+            edge_count_sum += edge_features[edge][0]
 
             edge_gx = edge_features[edge][:3]
             ctr = sum([i*j for i,j in zip(edge_gx,edge_para)])
@@ -209,7 +215,6 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
             ctr_sum += ctr
 
     for edge in edge_features:
-        splited = filtered_text.split()
         freq1 = splited.count(edge[0])
         freq2 = splited.count(edge[1])
         
@@ -221,15 +226,18 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
         cdistance = cosine_sim(vec1, vec2)
         edge_count = edge_features[edge][0]
 
+        force_socre = force(freq1, freq2, distance)
+        dice_score = dice(freq1, freq2, edge_count)
+
         if part == 'force*gx':
-            word_attr = force(freq1, freq2, distance) * edge_count
+            word_attr = force_socre * edge_count
         elif part == 'force+gx':
             part_weight = kwargs['part_weight']
-            word_attr = part_weight * edge_force[edge] / force_sum + (1 - part_weight) * edge_count /count_sum
+            word_attr = part_weight * edge_force[edge] / force_sum + (1 - part_weight) * edge_count / edge_count_sum
         elif part == 'force*ctr':
             edge_gx = edge_features[edge][:3]
             ctr = sum([i*j for i,j in zip(edge_gx,edge_para)])
-            word_attr = force(freq1, freq2, distance) * ctr
+            word_attr = force_socre * ctr
         elif part == 'force+ctr':
             part_weight = kwargs['part_weight']
             word_attr = part_weight * edge_force[edge] / force_sum + (1 - part_weight) * edge_ctr[edge] /ctr_sum
@@ -238,14 +246,24 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
             edge_try = 1
             for i in edge_gx:
                 edge_try *= i+1
-            word_attr = force(freq1, freq2, distance) * edge_try
+            word_attr = force_socre * edge_try
             # word_attr = edge_try
-        elif part == 'salience':
-            word_attr = dice(freq1, freq2, edge_count) / (distance * distance)
+        elif 'wang2015' in part:
+            if 'pmi' in part:
+                pmi_score = pmi(freq1, freq2, edge_count, freq_sum, edge_count_sum)
+                if 'cosine' in part:
+                    word_attr = pmi_score / (1 - cdistance)
+                else:
+                    word_attr = pmi_score / distance
+            else:
+                if 'cosine' in part:
+                    word_attr = dice_score / (1 - cdistance)
+                else:
+                    word_attr = dice_score / distance
         elif part == 'try':
             pass
         else:
-            word_attr = force(freq1, freq2, distance) * dice(freq1, freq2, edge_count)
+            word_attr = force_socre * dice_score
 
         edge_features[edge].append(word_attr)
 
@@ -255,8 +273,8 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
 def main(part_weight):
 
     dataset = 'KDD'
-    vec_type = 'separate'
-    part = 'force*gxs'
+    vec_type = 'total'
+    part = 'attr'
 
     dataset_dir = './data/embedding/' + dataset + '/'
     edgefeature_dir = dataset_dir + 'edge_features/'
@@ -286,7 +304,10 @@ def main(part_weight):
         edgefeatures2file(edgefeature_dir+filename, edge_features_new)
 
     from ke_main import evaluate_extraction
-    evaluate_extraction(dataset, str(part), omega=[-1], phi='*', damping=0.71, alter_node=None)
+    phi = '1'
+    if 'node' in part:
+        phi = '*'
+    evaluate_extraction(dataset, str(part), omega=[-1], phi=phi, damping=0.71, alter_node=None)
 
     print('.......feature_extract_DONE........')
 
