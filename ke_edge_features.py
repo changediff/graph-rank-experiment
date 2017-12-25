@@ -2,7 +2,8 @@
 
 import csv
 import math
-import gensim
+# import gensim
+import numpy as np
 
 from ke_preprocess import read_file, filter_text, normalized_token
 from ke_postprocess import rm_tags
@@ -58,15 +59,10 @@ def edgefeatures2file(path, edge_features):
 
 def cosine_sim(vec1, vec2):
     """余弦相似度"""
-    import numpy as np
-    from numpy import linalg as la
-
-    inA = np.mat(vec1)
-    inB = np.mat(vec2)
-    num = float(inA * inB.T) #若为行向量: A * B.T
-    donom = la.norm(inA) * la.norm(inB) ##余弦值 
-    return 0.5 + 0.5*(num / donom) # 归一化
-    #关于归一化：因为余弦值的范围是 [-1,+1] ，相似度计算时一般需要把值归一化到 [0,1]
+    def magnitude(vec):
+        return math.sqrt(np.dot(vec, vec))
+    consine = np.dot(vec1, vec2) / (magnitude(vec1) * magnitude(vec2) + 1e-10)
+    return 1 - consine
 
 def euc_distance(vec1, vec2):
     """欧式距离"""
@@ -76,6 +72,9 @@ def euc_distance(vec1, vec2):
     if distance == 0:
         distance = 0.1
     return distance
+
+def vec_dice(vec1, vec2):
+    return 2 * np.dot(vec1, vec2) / (np.dot(vec1, vec1) + np.dot(vec2, vec2))
 
 def add_vec_sim(edge_features, vec_dict, sim_type='cos'):
     """
@@ -177,7 +176,7 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
     """
     # 词向量的格式不统一，要想办法处理
     def force(freq1, freq2, distance):
-        return freq1 * freq2 / (distance * distance)
+        return freq1 * freq2 / (distance ** 2)
 
     def dice(freq1, freq2, edge_count):
         return 2 * edge_count / (freq1 + freq2)
@@ -185,7 +184,7 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
     def pmi(freq1, freq2, edge_count, freq_sum, edge_count_sum):
         return math.log((edge_count / edge_count_sum) / 
                         ((freq1 / freq_sum) * (freq2 / freq_sum)))
-    
+
     splited = filtered_text.split()
     freq_sum = len(splited)
 
@@ -231,37 +230,36 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
 
         if part == 'force*gx':
             word_attr = force_socre * edge_count
-        elif part == 'force+gx':
-            part_weight = kwargs['part_weight']
-            word_attr = part_weight * edge_force[edge] / force_sum + (1 - part_weight) * edge_count / edge_count_sum
         elif part == 'force*ctr':
             edge_gx = edge_features[edge][:3]
             ctr = sum([i*j for i,j in zip(edge_gx,edge_para)])
             word_attr = force_socre * ctr
-        elif part == 'force+ctr':
-            part_weight = kwargs['part_weight']
-            word_attr = part_weight * edge_force[edge] / force_sum + (1 - part_weight) * edge_ctr[edge] /ctr_sum
-        elif part == 'force*gxs':
+        elif 'force*gxs' in part:
             edge_gx = edge_features[edge][:3]
-            edge_try = 1
+            edge_gxs = 1
             for i in edge_gx:
-                edge_try *= i+1
-            word_attr = force_socre * edge_try
-            # word_attr = edge_try
+                edge_gxs *= i+1
+            word_attr = force_socre * edge_gxs
         elif 'wang2015' in part:
             if 'pmi' in part:
                 pmi_score = pmi(freq1, freq2, edge_count, freq_sum, edge_count_sum)
                 if 'cosine' in part:
-                    word_attr = pmi_score / (1 - cdistance)
+                    word_attr = pmi_score / cdistance
                 else:
                     word_attr = pmi_score / distance
             else:
                 if 'cosine' in part:
-                    word_attr = dice_score / (1 - cdistance)
+                    word_attr = dice_score / cdistance
                 else:
                     word_attr = dice_score / distance
-        elif part == 'try':
-            pass
+        elif 'force*vec_dice' in part:
+            word_attr = force_socre * vec_dice(vec1, vec2)
+        elif 'try' in part:
+            edge_gx = edge_features[edge][0:3]
+            edge_gxs = 1
+            for i in edge_gx:
+                edge_gxs *= i+1
+            word_attr = force_socre * dice_score * distance * edge_gxs
         else:
             word_attr = force_socre * dice_score
 
@@ -270,11 +268,16 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
     return edge_features
 
 # if __name__ == "__main__":
-def main(part_weight):
+def main():
 
-    dataset = 'KDD'
-    vec_type = 'total'
-    part = 'attr'
+    dataset = 'WWW'
+    vec_type = 'separate'
+    part = 'try+node'
+    lvec_type = 'word2vec'
+    damping = 0.7
+    phi = '1'
+    if 'node' in part:
+        phi = '*'
 
     dataset_dir = './data/embedding/' + dataset + '/'
     edgefeature_dir = dataset_dir + 'edge_features/'
@@ -285,6 +288,8 @@ def main(part_weight):
         vec_dict = read_vec('./data/embedding/vec/kdd.words.emb0.119')
     elif vec_type == 'total' and dataset == 'WWW':
         vec_dict = read_vec('./data/embedding/vec/WWW0.128')
+    elif vec_type == 'total-word2vec':
+        vec_dict = read_vec('./data/embedding/vec/'+dataset+'_w2v.emb')
 
     for filename in filenames:
         print(filename)
@@ -293,23 +298,21 @@ def main(part_weight):
         edge_features = read_edges(edgefeature_dir + filename)
         node_features = read_vec(nodefeature_dir + filename)
 
-        lvec_type = 'Word'
         lvec_dir = './data/embedding/vec/liu/data_8_11/' + lvec_type + '/' + dataset + '/'
         if vec_type == 'separate':
             vec_dict = read_vec(lvec_dir + filename)
+        # elif vec_type == 'word2vec':
+        #     vec_dict = read_vec('./data/embedding/word2vec/result_' + dataset + '/' + filename)
 
 
         edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict,
-                                          part=part, edge_para=[1,1,3], part_weight=part_weight)
+                                          part=part, edge_para=[1,1,3])
         edgefeatures2file(edgefeature_dir+filename, edge_features_new)
 
     from ke_main import evaluate_extraction
-    phi = '1'
-    if 'node' in part:
-        phi = '*'
-    evaluate_extraction(dataset, str(part), omega=[-1], phi=phi, damping=0.71, alter_node=None)
+    evaluate_extraction(dataset, str(part)+str(damping), omega='-1', phi=phi, damping=damping, alter_node=None)
 
     print('.......feature_extract_DONE........')
 
 if __name__=="__main__":
-    main(1)
+    main()

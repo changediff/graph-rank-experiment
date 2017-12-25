@@ -81,18 +81,24 @@ def nodefeatures2file(nodefeatures, path):
     for node in nodefeatures:
         row = [node] + nodefeatures[node]
         output.append(row)
-    with open(path, 'w') as f:
+    with open(path, mode='w', encoding='utf-8', newline='') as f:
         f_csv = csv.writer(f)
         f_csv.writerows(output)
 
 if __name__ == "__main__":
     dataset = 'KDD'
+    vec_type = 'total'
 
     dataset_dir = path.join('./data/embedding/', dataset)
     # edgefeature_dir = path.join(dataset_dir, 'edge_features')
     nodefeature_dir = path.join(dataset_dir, 'node_features')
     filenames = read_file(path.join(dataset_dir, 'abstract_list')).split(',')
     vecdir = path.join('./data/embedding/vec/liu/data_8_11/Word', dataset)
+
+    if vec_type == 'total' and dataset == 'KDD':
+        vec_dict = read_vec('./data/embedding/vec/kdd.words.emb0.119')
+    elif vec_type == 'total' and dataset == 'WWW':
+        vec_dict = read_vec('./data/embedding/vec/WWW0.128')
 
     # # 主题概率作为点特征
     # topic_num = topic
@@ -101,7 +107,6 @@ if __name__ == "__main__":
     for filename in filenames:
         print(filename)
 
-        
         filtered_text = filter_text(read_file(path.join(dataset_dir, 'abstracts', filename)))
         nodefeatures = read_vec(path.join(nodefeature_dir, filename))
 
@@ -109,16 +114,17 @@ if __name__ == "__main__":
         # nodefeatures_new = add_lda_prob(filename, filtered_text, ldadir, nodefeatures)
         
         # 词与文章相似度作为点特征
-        vec_dict = read_vec(path.join(vecdir, filename))
+        if vec_type == 'separate':
+            vec_dict = read_vec(path.join(vecdir, filename))
         nodefeatures_new = add_worddocsim(filtered_text, vec_dict, nodefeatures)
 
         nodefeatures2file(nodefeatures_new, path.join(nodefeature_dir, filename))
 
     print('.......node_features_DONE........')
 
-    from ke_main import evaluate_extraction
-    evaluate_extraction(dataset, 'textrank-docsim',
-                        omega=[1,0,0], phi=[-1], damping=0.85, alter_node=None)
+    # from ke_main import evaluate_extraction
+    # evaluate_extraction(dataset, 'textrank-docsim',
+    #                     omega=[1,0,0], phi=[-1], damping=0.85, alter_node=None)
 
 # if __name__ == "__main__":
     # topics = list(range(1,20))

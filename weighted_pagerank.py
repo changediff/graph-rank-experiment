@@ -26,7 +26,7 @@ def calc_weight(features, parameters):
     """利用特征和参数计算权重，暂采用简单的线性加和"""
     if parameters == '1':
         return 1
-    elif parameters == [-1]:
+    elif parameters == '-1':
         return features[-1]
     elif parameters == 'max':
         return max(features)
@@ -87,8 +87,10 @@ def weighted_pagerank(edges_features, nodes_features, omega=None, phi=None, d=0.
         if node not in personal_vector:
             personal_vector[node] = 0
 
-
-    pr = nx.pagerank(graph, alpha=d, personalization=personal_vector)
+    try:
+        pr = nx.pagerank(graph, alpha=d, personalization=personal_vector)
+    except nx.exception.NetworkXError:
+        pr = nx.pagerank(graph, alpha=0, personalization=personal_vector)
     return pr, graph
 
 def pagerank_tofile(pr, output='wpr.csv',top_num=None):
