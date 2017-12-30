@@ -246,24 +246,26 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
         cdistance = cosine_sim(vec1, vec2)
         edge_count = edge_features[edge][0]
 
-        force_socre = force(freq1, freq2, distance)
+        force_score = force(freq1, freq2, distance)
         dice_score = dice(freq1, freq2, edge_count)
+        cforce_score = force(freq1, freq2, cdistance)
+        srs_score = force_score * distance
+        if 'cos' in part:
+            srs_score = cforce_score * cdistance
 
-        if 'shi' in part:
-            distance = kwargs['shi_edge_sims'][edge][0]
+        # if 'shi' in part:
+        #     distance = kwargs['shi_edge_sims'][edge][0]
 
-        if part == 'force*gx':
-            word_attr = force_socre * edge_count
-        elif part == 'force*ctr':
+        if part == 'force*ctr':
             edge_gx = edge_features[edge][:3]
             ctr = sum([i*j for i,j in zip(edge_gx,edge_para)])
-            word_attr = force_socre * ctr
-        elif 'force*gxs' in part:
+            word_attr = force_score * ctr
+        elif 'prod' in part:
             edge_gx = edge_features[edge][:3]
             edge_gxs = 1
             for i in edge_gx:
                 edge_gxs *= i+1
-            word_attr = force_socre * edge_gxs
+            word_attr = force_score * edge_gxs
         elif 'wang2015' in part:
             if 'pmi' in part:
                 pmi_score = pmi(freq1, freq2, edge_count, freq_sum, edge_count_sum)
@@ -277,35 +279,33 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
                 else:
                     word_attr = dice_score / distance
         elif 'force*vec_dice' in part:
-            word_attr = force_socre * vec_dice(vec1, vec2)
+            word_attr = force_score * vec_dice(vec1, vec2)
         elif 'best' in part:
-            edge_gx = edge_features[edge][0:3]
-            edge_gxs = 1
-            for i in edge_gx:
-                edge_gxs *= i+1
-            word_attr = force_socre * dice_score * distance * edge_gxs
+            ctr_score = sum(edge_features[edge][0:3])
+            word_attr = srs_score * dice_score * ctr_score
         elif 'try' in part:
-            edge_gx = edge_features[edge][0:3:2]
-            edge_gxs = 1
-            for i in edge_gx:
-                edge_gxs *= i+1
-            word_attr = force_socre * dice_score * distance * edge_gxs
+            ctr_score = sum(edge_features[edge][0:3])
+            word_attr = srs_score * dice_score * ctr_score
         else:
-            word_attr = force_socre * dice_score
+            word_attr = force_score * dice_score
 
         edge_features[edge].append(word_attr)
 
     return edge_features
 
 # if __name__ == "__main__":
-def main():
+def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
 
-    dataset = 'KDD'
-    vec_type = 'total'
-    part = 'try'
-    sep_vec_type = 'word2vec'
-    shi_topic = 'cat'
-    damping = 0.85
+    dataset = dataset
+    part = part
+
+    vec_type = vec_type
+    sep_vec_type = sep_vec_type
+    shi_topic = shi_topic
+
+    damping = damping
+    # if 'node' in part:
+    #     damping = 0.7
     phi = '1'
     if 'node' in part:
         phi = '*'
@@ -320,9 +320,15 @@ def main():
     elif vec_type == 'total' and dataset == 'WWW':
         vec_dict = read_vec('./data/embedding/vec/WWW0.128')
     elif vec_type == 'total-word2vec':
+        vec_dict = read_vec('./data/embedding/vec/KDD&WWW_w2v.emb')
+    elif vec_type == 'total-word2vec2':
         vec_dict = read_vec('./data/embedding/vec/'+dataset+'_w2v.emb')
     elif vec_type == 'total-shi':
         vec_dict = read_vec('./data/embedding/vec/shi/'+dataset+str(shi_topic))
+    elif vec_type == 'total-topic10':
+        vec_dict = read_vec('./data/embedding/vec/Topic10.emb')
+    elif vec_type == 'total-topic100':
+        vec_dict = read_vec('./data/embedding/vec/Topic100.emb')
 
     shi_edge_path = './data/embedding/vec/shi/'+dataset+'/'
 
@@ -337,8 +343,8 @@ def main():
         else:
             shi_edge_sims = None
 
-        sep_vec_dir = './data/embedding/vec/liu/data_8_11/' + sep_vec_type + '/' + dataset + '/'
         if vec_type == 'separate':
+            sep_vec_dir = './data/embedding/vec/liu/data_8_11/' + sep_vec_type + '/' + dataset + '/'
             vec_dict = read_vec(sep_vec_dir + filename)
         # elif vec_type == 'word2vec':
         #     vec_dict = read_vec('./data/embedding/word2vec/result_' + dataset + '/' + filename)
@@ -349,9 +355,35 @@ def main():
         edgefeatures2file(edgefeature_dir+filename, edge_features_new)
 
     from ke_main import evaluate_extraction
-    evaluate_extraction(dataset, str(part)+str(damping), omega='-1', phi=phi, damping=damping, alter_node=None)
+    if 'shi' in vec_type:
+        method_name = '_'.join([vec_type, shi_topic, part, str(damping)])
+    elif 'total' in vec_type:
+        method_name = '_'.join([vec_type, part, str(damping)])
+    elif 'separate' in vec_type:
+        method_name = '_'.join([vec_type, sep_vec_type, part, str(damping)])
+    evaluate_extraction(dataset, method_name, omega='-1', phi=phi, damping=damping, alter_node=None)
 
     print('.......feature_extract_DONE........')
 
 if __name__=="__main__":
-    main()
+    datasets = ['WWW', 'KDD']
+    parts = ['best', 'best+cos', 'best+node']
+    shi_topics = list(map(str, range(10))) + ['cat']
+    vec_types = ['total', 'separate', 'total-word2vec', 'total-word2vec2', 'total-topic10', 'total-topic100', 'total-shi']
+    sep_vec_types = ['WordWithTopic', 'WordWithTopic8.5', 'Word', 'Word8.5', 'word2vec', 'w2v']
+    dampings = [0.85, 0.7]
+
+    for dataset in datasets:
+        for part in parts:
+            for damping in dampings:
+                for vec_type in vec_types:
+                    if 'shi' in vec_type:
+                        for shi_topic in shi_topics:
+                            main(dataset, part, vec_type, None, shi_topic, damping)
+                    elif 'separate' == vec_type:
+                        for svt in sep_vec_types:
+                            main(dataset, part, vec_type, svt, None, damping)
+                    else:
+                        main(dataset, part, vec_type, None, None, damping)
+
+    # main()

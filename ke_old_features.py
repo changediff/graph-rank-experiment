@@ -158,7 +158,7 @@ def save_node_features(file_name, data_dir, node_features):
 
 if __name__ == "__main__":
     # 计算生成经典特征
-    data_dir = './data/embedding/WWW/' #计算WWW数据集将此行中'KDD'替换为'WWW'
+    data_dir = './data/embedding/KDD/' #计算WWW数据集将此行中'KDD'替换为'WWW'
     file_names = read_file(data_dir+'abstract_list').split(',')
     for file_name in file_names:
         print(file_name)
@@ -170,9 +170,9 @@ if __name__ == "__main__":
         citing_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'citing', window=2)
         save_edge_features(file_name, data_dir, edge_freq, cited_edge_freq, citing_edge_freq)
 
-        # 读取点的特征，保存为需要的格式
-        node_list = filtered_text.split()
-        raw_node_features = read_file(data_dir+'raw_node_features')
-        node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='07') #023789 07
-        save_node_features(file_name, data_dir, node_features)
+        # # 读取点的特征，保存为需要的格式
+        # node_list = filtered_text.split()
+        # raw_node_features = read_file(data_dir+'raw_node_features')
+        # node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='07') #023789 07
+        # save_node_features(file_name, data_dir, node_features)
     print('.......old_features_DONE........')
