@@ -61,8 +61,8 @@ def cosine_sim(vec1, vec2):
     """余弦相似度"""
     def magnitude(vec):
         return math.sqrt(np.dot(vec, vec))
-    consine = np.dot(vec1, vec2) / (magnitude(vec1) * magnitude(vec2) + 1e-10)
-    return 1 - consine
+    cosine = np.dot(vec1, vec2) / (magnitude(vec1) * magnitude(vec2) + 1e-10)
+    return cosine
 
 def euc_distance(vec1, vec2):
     """欧式距离"""
@@ -235,23 +235,24 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
     for edge in edge_features:
         freq1 = splited.count(edge[0])
         freq2 = splited.count(edge[1])
-        tfidf1 = node_features[edge[0]][0] + 1
-        tfidf2 = node_features[edge[1]][0] + 1
-        
+
         # 读不到的词向量设为全1
         default_vec = [1] * len(list(vec_dict.values())[0])
         vec1 = vec_dict.get(edge[0], default_vec)
         vec2 = vec_dict.get(edge[1], default_vec)
         distance = euc_distance(vec1, vec2)
-        cdistance = cosine_sim(vec1, vec2)
+        cosine = cosine_sim(vec1, vec2)
+        cdistance = 1 - cosine
+        ang_distance = math.acos(cosine) / math.pi
         edge_count = edge_features[edge][0]
 
         force_score = force(freq1, freq2, distance)
         dice_score = dice(freq1, freq2, edge_count)
         cforce_score = force(freq1, freq2, cdistance)
         srs_score = force_score * distance
-        if 'cos' in part:
-            srs_score = cforce_score * cdistance
+        ctr_score = sum(edge_features[edge][0:3])
+        csrs_score = cforce_score * cdistance
+        asrs_score = force(freq1, freq2, ang_distance) * ang_distance
 
         # if 'shi' in part:
         #     distance = kwargs['shi_edge_sims'][edge][0]
@@ -280,11 +281,25 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
                     word_attr = dice_score / distance
         elif 'force*vec_dice' in part:
             word_attr = force_score * vec_dice(vec1, vec2)
+        elif 'dice' == part:
+            word_attr = dice_score
+        elif 'dice*ctr' == part:
+            word_attr = dice_score * ctr_score
+        elif 'srs' == part:
+            word_attr = srs_score
+        elif 'srs*dice' == part:
+            word_attr = srs_score * dice_score
+        elif 'csrs*dice' == part:
+            word_attr = csrs_score * dice_score
+        elif 'acsrs*dice' == part:
+            word_attr = asrs_score * dice_score
+        elif 'ang_sim(srs)' == part:
+            word_attr = 1 - ang_distance
+        elif 'srs*ctr' == part:
+            word_attr = srs_score * ctr_score
         elif 'best' in part:
-            ctr_score = sum(edge_features[edge][0:3])
             word_attr = srs_score * dice_score * ctr_score
         elif 'try' in part:
-            ctr_score = sum(edge_features[edge][0:3])
             word_attr = srs_score * dice_score * ctr_score
         else:
             word_attr = force_score * dice_score
@@ -346,9 +361,6 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
         if vec_type == 'separate':
             sep_vec_dir = './data/embedding/vec/liu/data_8_11/' + sep_vec_type + '/' + dataset + '/'
             vec_dict = read_vec(sep_vec_dir + filename)
-        # elif vec_type == 'word2vec':
-        #     vec_dict = read_vec('./data/embedding/word2vec/result_' + dataset + '/' + filename)
-
 
         edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict,
                                           part=part, edge_para=[1,1,3], shi_edge_sims=shi_edge_sims)
@@ -367,23 +379,33 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
 
 if __name__=="__main__":
     datasets = ['WWW', 'KDD']
-    parts = ['best', 'best+cos', 'best+node']
+    parts = ['csrs*dice', 'acsrs*dice', 'ang_sim(srs)']
     shi_topics = list(map(str, range(10))) + ['cat']
-    vec_types = ['total', 'separate', 'total-word2vec', 'total-word2vec2', 'total-topic10', 'total-topic100', 'total-shi']
+    vec_types = ['separate', 'total-word2vec', 'total-word2vec2', 'total-topic10', 'total-topic100', 'total-shi']
     sep_vec_types = ['WordWithTopic', 'WordWithTopic8.5', 'Word', 'Word8.5', 'word2vec', 'w2v']
     dampings = [0.85, 0.7]
 
     for dataset in datasets:
-        for part in parts:
-            for damping in dampings:
-                for vec_type in vec_types:
-                    if 'shi' in vec_type:
-                        for shi_topic in shi_topics:
-                            main(dataset, part, vec_type, None, shi_topic, damping)
-                    elif 'separate' == vec_type:
-                        for svt in sep_vec_types:
-                            main(dataset, part, vec_type, svt, None, damping)
-                    else:
-                        main(dataset, part, vec_type, None, None, damping)
+        for damping in dampings:
+            for part in parts:
+                if 'srs' in part:
+                    for vec_type in vec_types:
+                        if 'shi' in vec_type:
+                            for shi_topic in shi_topics:
+                                main(dataset, part, vec_type, None, shi_topic, damping)
+                        elif 'separate' == vec_type:
+                            for svt in sep_vec_types:
+                                main(dataset, part, vec_type, svt, None, damping)
+                        else:
+                            main(dataset, part, vec_type, None, None, damping)
+                else:
+                    main(dataset, part, 'total', None, None, damping)
 
-    # main()
+    # dataset = 'KDD'
+    # part = 'best'
+    # vec_type = 'total'
+    # sep_vec_type = 'w2v'
+    # shi_topic = '0'
+    # damping = 0.85
+
+    # main(dataset, part, vec_type, sep_vec_type, shi_topic, damping)
