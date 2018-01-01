@@ -51,7 +51,11 @@ def evaluate_extraction(dataset, method_name, ngrams=2, damping=0.85, omega=None
         pr, graph = wpr(edge_dir+file_name, node_dir+file_name, omega=omega, phi=phi, d=damping)
 
         gold = read_file(gold_dir+file_name)
-        keyphrases = get_phrases(pr, graph, abstr_dir, file_name, ng=ngrams)
+        pl2 = 0.6
+        pl3 = 0.2
+        if dataset == "WWW":
+            pl2 = 0.5
+        keyphrases = get_phrases(pr, graph, abstr_dir, file_name, ng=ngrams, pl2=pl2, pl3=pl3)
         top_phrases = []
         for phrase in keyphrases:
             if phrase[0] not in str(top_phrases):
@@ -99,11 +103,9 @@ def evaluate_extraction(dataset, method_name, ngrams=2, damping=0.85, omega=None
 
 if __name__ == "__main__":
     # './data/embedding/KDD/edge_features'： text, cited, citing,
-    # evaluate_extraction('WWW', 'cikm_without_topic', omega=[1, 1, 3], phi=[95,0,0,5,0,0])
+    # evaluate_extraction('WWW', 'CTR', omega=[2,3,3], phi='1')
 
     # omega: WWW-113, KDD-233
     # phi: WWW[95,0,0,5,0,0], KDD[88,0,0,12,0,0]
     # kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/convert/'
-    # evaluate_extraction('KDD', 'MIKE', omega=[2,3,3], phi=[88,12])
-    damping = 0
-    evaluate_extraction('KDD', 'tfidf', omega='1', phi=[1,0], damping=damping, alter_node=None)
+    evaluate_extraction('KDD', 'CTR', omega=[1,3,3], phi='1')

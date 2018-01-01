@@ -2,6 +2,7 @@
 from nltk import word_tokenize, pos_tag
 from nltk.stem import SnowballStemmer
 from re import match
+import os
 
 def read_file(path):
     with open(path, encoding='utf-8') as file:

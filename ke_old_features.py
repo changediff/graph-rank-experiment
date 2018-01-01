@@ -2,6 +2,7 @@
 import itertools
 import csv
 import re
+import os
 
 from gensim import corpora, models, similarities
 from ke_preprocess import filter_text, read_file
@@ -73,19 +74,19 @@ def sum_cite_edge_freq(file_name, data_dir, cite_type, window=2):
         return cite_list
 
     if cite_type == 'cited':
-        cite_dir = data_dir + 'citedcontexts/'
-        cite_list_all = read_file(data_dir+'cited_list')
+        cite_dir = os.path.join(data_dir, 'citedcontexts')
+        cite_list_all = read_file(os.path.join(data_dir, 'cited_list'))
     elif cite_type == 'citing':
-        cite_dir = data_dir + 'citingcontexts/'
-        cite_list_all = read_file(data_dir+'citing_list')
+        cite_dir = os.path.join(data_dir, 'citingcontexts')
+        cite_list_all = read_file(os.path.join(data_dir, 'citing_list'))
     else:
         print('wrong cite type')
     cite_list = get_cite_list(file_name, cite_list_all)
     # 目标文档
-    target = filter_text(read_file(data_dir+'abstracts/'+file_name))
+    target = filter_text(read_file(os.path.join(data_dir, 'abstracts', file_name)))
     cite_edge_freqs = {}
     for cite_name in cite_list:
-        cite_text = filter_text(read_file(cite_dir+cite_name), with_tag=False)
+        cite_text = filter_text(read_file(os.path.join(cite_dir, cite_name)), with_tag=False)
         cite_edge_freq = single_cite_edge_freq(target, cite_text, window=window)
         for key in cite_edge_freq:
             cite_edge_freqs[key] = cite_edge_freqs.get(key, 0) + cite_edge_freq[key]
@@ -145,34 +146,38 @@ def save_edge_features(file_name, data_dir, main_feature, *args):
     for key in edge_features:
         output.append(list(key) + edge_features[key])
     # print(output)
-    with open(data_dir+'edge_features/'+file_name, mode='w', encoding='utf-8', newline='') as csvfile:
+    with open(os.path.join(data_dir, 'edge_features', file_name), mode='w', encoding='utf-8', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerows(output)
 
 def save_node_features(file_name, data_dir, node_features):
     """将点特征保存为csv表格"""
-    with open(data_dir+'node_features/'+file_name, mode='w', encoding='utf-8', newline='') as csvfile:
+    with open(os.path.join(data_dir, 'node_features', file_name), mode='w', encoding='utf-8', newline='') as csvfile:
         writer = csv.writer(csvfile)
         for key in node_features:
             writer.writerow([key]+node_features[key])
 
-if __name__ == "__main__":
+def main(dataset, window):
     # 计算生成经典特征
-    data_dir = './data/embedding/KDD/' #计算WWW数据集将此行中'KDD'替换为'WWW'
-    file_names = read_file(data_dir+'abstract_list').split(',')
+    data_dir = os.path.join('./data/embedding/', dataset)
+    file_names = read_file(os.path.join(data_dir, 'abstract_list')).split(',')
     for file_name in file_names:
         print(file_name)
-        filtered_text = filter_text(read_file(data_dir+'abstracts/'+file_name))
+        filtered_text = filter_text(read_file(os.path.join(data_dir, 'abstracts', file_name)))
 
         # 计算保存边特征，分别为：共现次数，被引文献共现次数，引用文献共现次数
-        edge_freq = get_edge_freq(filtered_text, window=2)
-        cited_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'cited', window=2)
-        citing_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'citing', window=2)
+        edge_freq = get_edge_freq(filtered_text, window=window)
+        cited_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'cited', window=window)
+        citing_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'citing', window=window)
         save_edge_features(file_name, data_dir, edge_freq, cited_edge_freq, citing_edge_freq)
 
         # # 读取点的特征，保存为需要的格式
         # node_list = filtered_text.split()
-        # raw_node_features = read_file(data_dir+'raw_node_features')
+        # raw_node_features = read_file(os.path.join(data_dir, 'raw_node_features'))
         # node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='07') #023789 07
         # save_node_features(file_name, data_dir, node_features)
     print('.......old_features_DONE........')
+
+if __name__ == "__main__":
+    main('WWW', 2)
+    # main('KDD', 3)

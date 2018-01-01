@@ -287,7 +287,7 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
             word_attr = dice_score * ctr_score
         elif 'srs' == part:
             word_attr = srs_score
-        elif 'srs*dice' == part:
+        elif 'war2' == part:
             word_attr = srs_score * dice_score
         elif 'csrs*dice' == part:
             word_attr = csrs_score * dice_score
@@ -300,7 +300,7 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
         elif 'best' in part:
             word_attr = srs_score * dice_score * ctr_score
         elif 'try' in part:
-            word_attr = srs_score * dice_score * ctr_score
+            word_attr = srs_score * dice_score
         else:
             word_attr = force_score * dice_score
 
@@ -319,8 +319,8 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
     shi_topic = shi_topic
 
     damping = damping
-    # if 'node' in part:
-    #     damping = 0.7
+    if 'node' in part:
+        damping = 0.7
     phi = '1'
     if 'node' in part:
         phi = '*'
@@ -378,34 +378,34 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
     print('.......feature_extract_DONE........')
 
 if __name__=="__main__":
-    datasets = ['WWW', 'KDD']
-    parts = ['csrs*dice', 'acsrs*dice', 'ang_sim(srs)']
-    shi_topics = list(map(str, range(10))) + ['cat']
-    vec_types = ['separate', 'total-word2vec', 'total-word2vec2', 'total-topic10', 'total-topic100', 'total-shi']
-    sep_vec_types = ['WordWithTopic', 'WordWithTopic8.5', 'Word', 'Word8.5', 'word2vec', 'w2v']
-    dampings = [0.85, 0.7]
+    # datasets = ['WWW', 'KDD']
+    # parts = ['try']
+    # shi_topics = list(map(str, range(10))) + ['cat']
+    # vec_types = ['separate', 'total-word2vec', 'total-word2vec2', 'total-shi']
+    # sep_vec_types = ['WordWithTopic', 'WordWithTopic8.5', 'word2vec']
+    # dampings = [0.85, 0.7]
 
-    for dataset in datasets:
-        for damping in dampings:
-            for part in parts:
-                if 'srs' in part:
-                    for vec_type in vec_types:
-                        if 'shi' in vec_type:
-                            for shi_topic in shi_topics:
-                                main(dataset, part, vec_type, None, shi_topic, damping)
-                        elif 'separate' == vec_type:
-                            for svt in sep_vec_types:
-                                main(dataset, part, vec_type, svt, None, damping)
-                        else:
-                            main(dataset, part, vec_type, None, None, damping)
-                else:
-                    main(dataset, part, 'total', None, None, damping)
+    # for dataset in datasets:
+    #     for damping in dampings:
+    #         for part in parts:
+    #             if 'srs' in part:
+    #                 for vec_type in vec_types:
+    #                     if 'shi' in vec_type:
+    #                         for shi_topic in shi_topics:
+    #                             main(dataset, part, vec_type, None, shi_topic, damping)
+    #                     elif 'separate' == vec_type:
+    #                         for svt in sep_vec_types:
+    #                             main(dataset, part, vec_type, svt, None, damping)
+    #                     else:
+    #                         main(dataset, part, vec_type, None, None, damping)
+    #             else:
+    #                 main(dataset, part, 'total', None, None, damping)
 
-    # dataset = 'KDD'
-    # part = 'best'
-    # vec_type = 'total'
-    # sep_vec_type = 'w2v'
-    # shi_topic = '0'
-    # damping = 0.85
+    dataset = 'WWW'
+    part = 'best+node'
+    vec_type = 'separate'
+    sep_vec_type = 'WordWithTopic8.5'
+    shi_topic = 'cat'
+    damping = 0.85
 
-    # main(dataset, part, vec_type, sep_vec_type, shi_topic, damping)
+    main(dataset, part, vec_type, sep_vec_type, shi_topic, damping)

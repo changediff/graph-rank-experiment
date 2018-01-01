@@ -36,11 +36,8 @@ def calc_weight(features, parameters):
         for f in features:
             weight *= f + 1
         return weight
-    elif parameters == 'exp':
-        weight = 0
-        for f in features:
-            weight += math.e ** f
-        return weight
+    elif parameters == 'ctr':
+        return sum(features[:3])
     elif parameters == 'tfidf':
         return features[0]
     elif parameters == 'sum':
