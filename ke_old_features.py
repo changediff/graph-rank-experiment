@@ -179,5 +179,5 @@ def main(dataset, window):
     print('.......old_features_DONE........')
 
 if __name__ == "__main__":
-    main('WWW', 2)
+    main('WWW', 5)
     # main('KDD', 3)

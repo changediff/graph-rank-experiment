@@ -4,6 +4,7 @@ import csv
 import math
 # import gensim
 import numpy as np
+import os
 
 from ke_preprocess import read_file, filter_text, normalized_token
 from ke_postprocess import rm_tags
@@ -107,7 +108,7 @@ def google_news_sim(text, edge_features, vec_model):
     """
     text_notag = rm_tags(text)
     stem_dict = text2_stem_dict(text_notag)
-
+    news_sim = {}
     for edge in edge_features:
         word1 = stem_dict.get(edge[0], edge[0])
         word2 = stem_dict.get(edge[1], edge[1])
@@ -115,9 +116,9 @@ def google_news_sim(text, edge_features, vec_model):
             sim = vec_model.wv.similarity(word1, word2)
         except:
             sim = 0.01
-        edge_features[edge].append(sim)
+        news_sim[edge] = sim
 
-    return edge_features
+    return news_sim
 
 def svec_maxsim(shi_path, edge_features, text):
     """
@@ -164,21 +165,21 @@ def svec_maxsim(shi_path, edge_features, text):
     return edge_features
 
 def shivec_dist(dataset):
-    dataset_dir = './data/embedding/' + dataset + '/'
-    edgefeature_dir = dataset_dir + 'edge_features/'
-    nodefeature_dir = dataset_dir + 'node_features/'
-    filenames = read_file(dataset_dir + 'abstract_list').split(',')
-    shi_path = './data/embedding/vec/shi/'+dataset+'_embedding_stem.vec'
+    dataset_dir = os.path.join('./data/embedding/', dataset)
+    edgefeature_dir = os.path.join(dataset_dir, 'edge_features/')
+    nodefeature_dir = os.path.join(dataset_dir, 'node_features/')
+    filenames = read_file(os.path.join(dataset_dir, 'abstract_list')).split(',')
+    shi_path = os.path.join('./data/embedding/vec/shi/', dataset+'_embedding_stem.vec')
 
     for filename in filenames:
         print(filename)
-        text = read_file(dataset_dir + 'abstracts/' + filename)
+        text = read_file(os.path.join(dataset_dir, 'abstracts/', filename))
         filtered_text = filter_text(text)
-        edge_features = read_edges(edgefeature_dir + filename)
-        node_features = read_vec(nodefeature_dir + filename)
+        edge_features = read_edges(os.path.join(edgefeature_dir, filename))
+        node_features = read_vec(os.path.join(nodefeature_dir, filename))
 
         edge_features_new = svec_maxsim(shi_path, edge_features, text)
-        edgefeatures2file('./data/embedding/vec/shi/'+dataset+'/'+filename, edge_features_new)
+        edgefeatures2file(os.path.join('./data/embedding/vec/shi/', dataset, filename), edge_features_new)
 
 
 def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
@@ -208,7 +209,7 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
     freq_sum = len(splited)
 
     # 统计force、共现次数的总和、总词数、边数，以便标准化
-    if 'pmi' in part or 'ctr' in part:
+    if 'pmi' in part or 'normalize' in part:
         edge_force = {}
         edge_ctr = {}
         force_sum = 0
@@ -241,6 +242,8 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
         vec1 = vec_dict.get(edge[0], default_vec)
         vec2 = vec_dict.get(edge[1], default_vec)
         distance = euc_distance(vec1, vec2)
+        if 'wiki' in part:
+            distance = 1.01 - float(kwargs['wiki_sims'][edge][0])
         cosine = cosine_sim(vec1, vec2)
         cdistance = 1 - cosine
         ang_distance = math.acos(cosine) / math.pi
@@ -254,14 +257,7 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
         csrs_score = cforce_score * cdistance
         asrs_score = force(freq1, freq2, ang_distance) * ang_distance
 
-        # if 'shi' in part:
-        #     distance = kwargs['shi_edge_sims'][edge][0]
-
-        if part == 'force*ctr':
-            edge_gx = edge_features[edge][:3]
-            ctr = sum([i*j for i,j in zip(edge_gx,edge_para)])
-            word_attr = force_score * ctr
-        elif 'prod' in part:
+        if 'prod' in part:
             edge_gx = edge_features[edge][:3]
             edge_gxs = 1
             for i in edge_gx:
@@ -279,24 +275,10 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
                     word_attr = dice_score / cdistance
                 else:
                     word_attr = dice_score / distance
-        elif 'force*vec_dice' in part:
-            word_attr = force_score * vec_dice(vec1, vec2)
-        elif 'dice' == part:
-            word_attr = dice_score
-        elif 'dice*ctr' == part:
-            word_attr = dice_score * ctr_score
-        elif 'srs' == part:
-            word_attr = srs_score
-        elif 'war2' == part:
-            word_attr = srs_score * dice_score
-        elif 'csrs*dice' == part:
-            word_attr = csrs_score * dice_score
-        elif 'acsrs*dice' == part:
-            word_attr = asrs_score * dice_score
-        elif 'ang_sim(srs)' == part:
-            word_attr = 1 - ang_distance
-        elif 'srs*ctr' == part:
+        elif 'GEKEsc' in part:
             word_attr = srs_score * ctr_score
+        elif 'GEKEsd' in part:
+            word_attr = srs_score * dice_score
         elif 'best' in part:
             word_attr = srs_score * dice_score * ctr_score
         elif 'try' in part:
@@ -323,12 +305,12 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
         damping = 0.7
     phi = '1'
     if 'node' in part:
-        phi = '*'
+        phi = [1,0]
 
-    dataset_dir = './data/embedding/' + dataset + '/'
-    edgefeature_dir = dataset_dir + 'edge_features/'
-    nodefeature_dir = dataset_dir + 'node_features/'
-    filenames = read_file(dataset_dir + 'abstract_list').split(',')
+    dataset_dir = os.path.join('./data/embedding/', dataset)
+    edgefeature_dir = os.path.join(dataset_dir, 'edge_features')
+    nodefeature_dir = os.path.join(dataset_dir, 'node_features')
+    filenames = read_file(os.path.join(dataset_dir,'abstract_list')).split(',')
 
     if vec_type == 'total' and dataset == 'KDD':
         vec_dict = read_vec('./data/embedding/vec/kdd.words.emb0.119')
@@ -337,34 +319,39 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
     elif vec_type == 'total-word2vec':
         vec_dict = read_vec('./data/embedding/vec/KDD&WWW_w2v.emb')
     elif vec_type == 'total-word2vec2':
-        vec_dict = read_vec('./data/embedding/vec/'+dataset+'_w2v.emb')
+        vec_dict = read_vec(os.path.join('./data/embedding/vec/',dataset+'_w2v.emb'))
     elif vec_type == 'total-shi':
-        vec_dict = read_vec('./data/embedding/vec/shi/'+dataset+str(shi_topic))
+        vec_dict = read_vec(os.path.join('./data/embedding/vec/shi/', dataset+shi_topic))
     elif vec_type == 'total-topic10':
         vec_dict = read_vec('./data/embedding/vec/Topic10.emb')
     elif vec_type == 'total-topic100':
         vec_dict = read_vec('./data/embedding/vec/Topic100.emb')
 
-    shi_edge_path = './data/embedding/vec/shi/'+dataset+'/'
+    shi_edge_path = os.path.join('./data/embedding/vec/shi/', dataset)
 
     for filename in filenames:
         print(filename)
-        text = read_file(dataset_dir + 'abstracts/' + filename)
+        text = read_file(os.path.join(dataset_dir, 'abstracts', filename))
         filtered_text = filter_text(text)
-        edge_features = read_edges(edgefeature_dir + filename)
-        node_features = read_vec(nodefeature_dir + filename)
+        edge_features = read_edges(os.path.join(edgefeature_dir, filename))
+        node_features = read_vec(os.path.join(nodefeature_dir, filename))
         if 'shi' in part:
-            shi_edge_sims = read_edges(shi_edge_path + filename)
+            shi_edge_sims = read_edges(os.path.join(shi_edge_path, filename))
         else:
             shi_edge_sims = None
 
+        if 'wiki' in part:
+            wiki_sims = read_edges(os.path.join(dataset_dir, 'wiki_sim', filename))
+        else:
+            wiki_sims = None
+
         if vec_type == 'separate':
-            sep_vec_dir = './data/embedding/vec/liu/data_8_11/' + sep_vec_type + '/' + dataset + '/'
-            vec_dict = read_vec(sep_vec_dir + filename)
+            sep_vec_dir = os.path.join('./data/embedding/vec/liu/data_8_11/', sep_vec_type, dataset)
+            vec_dict = read_vec(os.path.join(sep_vec_dir, filename))
 
         edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict,
-                                          part=part, edge_para=[1,1,3], shi_edge_sims=shi_edge_sims)
-        edgefeatures2file(edgefeature_dir+filename, edge_features_new)
+                                          part=part, edge_para=[1,1,3], wiki_sims=wiki_sims)
+        edgefeatures2file(os.path.join(edgefeature_dir, filename), edge_features_new)
 
     from ke_main import evaluate_extraction
     if 'shi' in vec_type:
@@ -401,9 +388,9 @@ if __name__=="__main__":
     #             else:
     #                 main(dataset, part, 'total', None, None, damping)
 
-    dataset = 'WWW'
-    part = 'best+node'
-    vec_type = 'separate'
+    dataset = 'KDD'
+    part = 'best_wiki+node'
+    vec_type = 'total-word2vec'
     sep_vec_type = 'WordWithTopic8.5'
     shi_topic = 'cat'
     damping = 0.85

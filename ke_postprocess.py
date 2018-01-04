@@ -12,7 +12,7 @@ def rm_tags(file_text):
         text_notag = text_notag + ' ' + t[:t.find('_')]
     return text_notag
 
-def get_phrases(pr, graph, abstr_path, file_name, ng=2, pl2=0.6, pl3=0.2):
+def get_phrases(pr, graph, abstr_path, file_name, ng=2, pl2=0.6, pl3=0.3):
     """返回一个list：[('large numbers', 0.0442255866192), ('Internet criminal', 0.0440296017801)]"""
     text = rm_tags(read_file(abstr_path+file_name))
     tokens = word_tokenize(text.lower())
