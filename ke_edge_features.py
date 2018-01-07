@@ -195,14 +195,10 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
     """
     # 词向量的格式不统一，要想办法处理
     def force(freq1, freq2, distance):
-        return freq1 * freq2 / (distance ** 2)
+        return freq1 * freq2 / (distance * distance)
 
     def dice(freq1, freq2, edge_count):
         return 2 * edge_count / (freq1 + freq2)
-
-    def pmi(freq1, freq2, edge_count, freq_sum, edge_count_sum):
-        return math.log((edge_count / edge_count_sum) / 
-                        ((freq1 / freq_sum) * (freq2 / freq_sum)))
 
     splited = filtered_text.split()
     freq_sum = len(splited)
@@ -230,26 +226,22 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
         ctr_score = sum(edge_features[edge][0:3])
         ctr_frac_score = 1
         for edge_cf in edge_features[edge][0:3]:
-            ctr_frac_score *= 1 + edge_cf
-        csrs_score = cforce_score * cdistance
-        asrs_score = force(freq1, freq2, ang_distance) * ang_distance
+            ctr_frac_score *= edge_cf+1
+        # csrs_score = cforce_score * cdistance
+        # asrs_score = force(freq1, freq2, ang_distance) * ang_distance
 
         if 'prod' in part:
-            edge_gx = edge_features[edge][:3]
-            edge_gxs = 1
-            for i in edge_gx:
-                edge_gxs *= i+1
-            word_attr = force_score * edge_gxs
+            word_attr = force_score * ctr_frac_score
         elif 'GEKEsc' in part:
             word_attr = srs_score * ctr_score
-        elif 'GEKEsd' in part:
-            word_attr = srs_score * dice_score
         elif 'GEKEsdc' in part:
             word_attr = srs_score * dice_score * ctr_score
+        elif 'GEKEsd' in part:
+            word_attr = srs_score * dice_score
         elif 'try' in part:
-            word_attr = ctr_score * dice_score
+            word_attr = force_score * dice_score
         else:
-            word_attr = asrs_score * dice_score
+            word_attr = force_score * dice_score
 
         edge_features[edge].append(word_attr)
 
@@ -355,8 +347,8 @@ if __name__=="__main__":
 
     dataset = 'KDD'
     part = 'GEKEsdc'
-    vec_type = 'total-topic10'
-    sep_vec_type = 'WordWithTopic'
+    vec_type = 'separate'
+    sep_vec_type = 'WordWithTopic8.5'
     shi_topic = '0'
     damping = 0.85
 
