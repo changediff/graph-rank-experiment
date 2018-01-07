@@ -68,4 +68,4 @@ def main(dataset, window):
     print('.......wiki_sim_DONE........')
 
 if __name__=="__main__":
-    main('KDD', 2)
+    main('WWW', 2)

@@ -2,9 +2,8 @@
 
 import csv
 import math
-# import gensim
-import numpy as np
 import os
+import numpy as np
 
 from ke_preprocess import read_file, filter_text, normalized_token
 from ke_postprocess import rm_tags
@@ -183,7 +182,7 @@ def shivec_dist(dataset):
 
 
 def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
-                  part=None, edge_para=None, node_para=None, **kwargs):
+                  part=None, **kwargs):
     """
     edge feature
     word attraction rank
@@ -208,31 +207,6 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
     splited = filtered_text.split()
     freq_sum = len(splited)
 
-    # 统计force、共现次数的总和、总词数、边数，以便标准化
-    if 'pmi' in part or 'normalize' in part:
-        edge_force = {}
-        edge_ctr = {}
-        force_sum = 0
-        edge_count_sum = 0
-        ctr_sum = 0
-        for edge in edge_features:
-            freq1 = splited.count(edge[0])
-            freq2 = splited.count(edge[1])
-
-            default_vec = [1] * len(list(vec_dict.values())[0])
-            vec1 = vec_dict.get(edge[0], default_vec)
-            vec2 = vec_dict.get(edge[1], default_vec)
-            distance = euc_distance(vec1, vec2)
-            attraction_force = force(freq1, freq2, distance)
-            edge_force[edge] = attraction_force
-            force_sum += attraction_force
-            edge_count_sum += edge_features[edge][0]
-
-            edge_gx = edge_features[edge][:3]
-            ctr = sum([i*j for i,j in zip(edge_gx,edge_para)])
-            edge_ctr[edge] = ctr
-            ctr_sum += ctr
-
     for edge in edge_features:
         freq1 = splited.count(edge[0])
         freq2 = splited.count(edge[1])
@@ -254,6 +228,9 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
         cforce_score = force(freq1, freq2, cdistance)
         srs_score = force_score * distance
         ctr_score = sum(edge_features[edge][0:3])
+        ctr_frac_score = 1
+        for edge_cf in edge_features[edge][0:3]:
+            ctr_frac_score *= 1 + edge_cf
         csrs_score = cforce_score * cdistance
         asrs_score = force(freq1, freq2, ang_distance) * ang_distance
 
@@ -263,28 +240,16 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
             for i in edge_gx:
                 edge_gxs *= i+1
             word_attr = force_score * edge_gxs
-        elif 'wang2015' in part:
-            if 'pmi' in part:
-                pmi_score = pmi(freq1, freq2, edge_count, freq_sum, edge_count_sum)
-                if 'cosine' in part:
-                    word_attr = pmi_score / cdistance
-                else:
-                    word_attr = pmi_score / distance
-            else:
-                if 'cosine' in part:
-                    word_attr = dice_score / cdistance
-                else:
-                    word_attr = dice_score / distance
         elif 'GEKEsc' in part:
             word_attr = srs_score * ctr_score
         elif 'GEKEsd' in part:
             word_attr = srs_score * dice_score
-        elif 'best' in part:
+        elif 'GEKEsdc' in part:
             word_attr = srs_score * dice_score * ctr_score
         elif 'try' in part:
-            word_attr = srs_score * dice_score
+            word_attr = ctr_score * dice_score
         else:
-            word_attr = force_score * dice_score
+            word_attr = asrs_score * dice_score
 
         edge_features[edge].append(word_attr)
 
@@ -346,11 +311,11 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
             wiki_sims = None
 
         if vec_type == 'separate':
-            sep_vec_dir = os.path.join('./data/embedding/vec/liu/data_8_11/', sep_vec_type, dataset)
+            sep_vec_dir = os.path.join('./data/embedding/vec/separate/', sep_vec_type, dataset)
             vec_dict = read_vec(os.path.join(sep_vec_dir, filename))
 
         edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict,
-                                          part=part, edge_para=[1,1,3], wiki_sims=wiki_sims)
+                                          part=part, wiki_sims=wiki_sims)
         edgefeatures2file(os.path.join(edgefeature_dir, filename), edge_features_new)
 
     from ke_main import evaluate_extraction
@@ -389,10 +354,10 @@ if __name__=="__main__":
     #                 main(dataset, part, 'total', None, None, damping)
 
     dataset = 'KDD'
-    part = 'best_wiki+node'
-    vec_type = 'total-word2vec'
-    sep_vec_type = 'WordWithTopic8.5'
-    shi_topic = 'cat'
+    part = 'GEKEsdc'
+    vec_type = 'total-topic10'
+    sep_vec_type = 'WordWithTopic'
+    shi_topic = '0'
     damping = 0.85
 
     main(dataset, part, vec_type, sep_vec_type, shi_topic, damping)
