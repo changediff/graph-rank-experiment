@@ -51,10 +51,10 @@ def evaluate_extraction(dataset, method_name, ngrams=2, damping=0.85, omega=None
         pr, graph = wpr(edge_dir+file_name, node_dir+file_name, omega=omega, phi=phi, d=damping)
 
         gold = read_file(gold_dir+file_name)
-        pl2 = 0.6
+        pl2 = 0.62
         pl3 = 0.3
-        # if dataset == "WWW":
-        #     pl2 = 0.5
+        if dataset == "WWW":
+            pl2 = 0.55
         keyphrases = get_phrases(pr, graph, abstr_dir, file_name, ng=ngrams, pl2=pl2, pl3=pl3)
         top_phrases = []
         for phrase in keyphrases:

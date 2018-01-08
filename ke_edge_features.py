@@ -7,6 +7,7 @@ import numpy as np
 
 from ke_preprocess import read_file, filter_text, normalized_token
 from ke_postprocess import rm_tags
+from ke_main import evaluate_extraction
 
 def read_vec(path, standard=True):
     """
@@ -248,18 +249,17 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
     return edge_features
 
 # if __name__ == "__main__":
-def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
+def main(dataset, part, vec_type, sub_vec_type, damping):
 
     dataset = dataset
     part = part
 
     vec_type = vec_type
-    sep_vec_type = sep_vec_type
-    shi_topic = shi_topic
+    sub_vec_type = sub_vec_type
+    shi_topic = 'cat'
 
     damping = damping
-    if 'node' in part:
-        damping = 0.7
+
     phi = '1'
     if 'node' in part:
         phi = [1,0]
@@ -269,9 +269,11 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
     nodefeature_dir = os.path.join(dataset_dir, 'node_features')
     filenames = read_file(os.path.join(dataset_dir,'abstract_list')).split(',')
 
-    if vec_type == 'total' and dataset == 'KDD':
+    if vec_type == 'total':
+        vec_dict = read_vec(os.path.join('./data/embedding/vec/total', sub_vec_type+'.emb'))
+    elif vec_type == 'total-we' and dataset == 'KDD':
         vec_dict = read_vec('./data/embedding/vec/kdd.words.emb0.119')
-    elif vec_type == 'total' and dataset == 'WWW':
+    elif vec_type == 'total-we' and dataset == 'WWW':
         vec_dict = read_vec('./data/embedding/vec/WWW0.128')
     elif vec_type == 'total-word2vec':
         vec_dict = read_vec('./data/embedding/vec/KDD&WWW_w2v.emb')
@@ -279,12 +281,6 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
         vec_dict = read_vec(os.path.join('./data/embedding/vec/',dataset+'_w2v.emb'))
     elif vec_type == 'total-shi':
         vec_dict = read_vec(os.path.join('./data/embedding/vec/shi/', dataset+shi_topic))
-    elif vec_type == 'total-topic10':
-        vec_dict = read_vec('./data/embedding/vec/Topic10.emb')
-    elif vec_type == 'total-topic100':
-        vec_dict = read_vec('./data/embedding/vec/Topic100.emb')
-
-    shi_edge_path = os.path.join('./data/embedding/vec/shi/', dataset)
 
     for filename in filenames:
         print(filename)
@@ -292,10 +288,6 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
         filtered_text = filter_text(text)
         edge_features = read_edges(os.path.join(edgefeature_dir, filename))
         node_features = read_vec(os.path.join(nodefeature_dir, filename))
-        if 'shi' in part:
-            shi_edge_sims = read_edges(os.path.join(shi_edge_path, filename))
-        else:
-            shi_edge_sims = None
 
         if 'wiki' in part:
             wiki_sims = read_edges(os.path.join(dataset_dir, 'wiki_sim', filename))
@@ -303,53 +295,36 @@ def main(dataset, part, vec_type, sep_vec_type, shi_topic, damping):
             wiki_sims = None
 
         if vec_type == 'separate':
-            sep_vec_dir = os.path.join('./data/embedding/vec/separate/', sep_vec_type, dataset)
+            sep_vec_dir = os.path.join('./data/embedding/vec/separate/', sub_vec_type, dataset)
             vec_dict = read_vec(os.path.join(sep_vec_dir, filename))
 
         edge_features_new = add_word_attr(filtered_text, edge_features, node_features, vec_dict,
                                           part=part, wiki_sims=wiki_sims)
         edgefeatures2file(os.path.join(edgefeature_dir, filename), edge_features_new)
 
-    from ke_main import evaluate_extraction
-    if 'shi' in vec_type:
-        method_name = '_'.join([vec_type, shi_topic, part, str(damping)])
-    elif 'total' in vec_type:
-        method_name = '_'.join([vec_type, part, str(damping)])
-    elif 'separate' in vec_type:
-        method_name = '_'.join([vec_type, sep_vec_type, part, str(damping)])
+    method_name = '_'.join([vec_type, sub_vec_type, part, str(damping)])
     evaluate_extraction(dataset, method_name, omega='-1', phi=phi, damping=damping, alter_node=None)
 
     print('.......feature_extract_DONE........')
 
 if __name__=="__main__":
-    # datasets = ['WWW', 'KDD']
-    # parts = ['try']
-    # shi_topics = list(map(str, range(10))) + ['cat']
-    # vec_types = ['separate', 'total-word2vec', 'total-word2vec2', 'total-shi']
-    # sep_vec_types = ['WordWithTopic', 'WordWithTopic8.5', 'word2vec']
-    # dampings = [0.85, 0.7]
-
-    # for dataset in datasets:
-    #     for damping in dampings:
-    #         for part in parts:
-    #             if 'srs' in part:
-    #                 for vec_type in vec_types:
-    #                     if 'shi' in vec_type:
-    #                         for shi_topic in shi_topics:
-    #                             main(dataset, part, vec_type, None, shi_topic, damping)
-    #                     elif 'separate' == vec_type:
-    #                         for svt in sep_vec_types:
-    #                             main(dataset, part, vec_type, svt, None, damping)
-    #                     else:
-    #                         main(dataset, part, vec_type, None, None, damping)
-    #             else:
-    #                 main(dataset, part, 'total', None, None, damping)
-
-    dataset = 'KDD'
-    part = 'GEKEsdc'
-    vec_type = 'separate'
-    sep_vec_type = 'WordWithTopic8.5'
-    shi_topic = '0'
+    datasets = ['WWW', 'KDD']
+    parts = ['war', 'GEKEsd', 'GEKEsc', 'GEKEsdc', 'GEKEsdc+node']
+    vec_type = 'total'
+    sub_vec_types = ['_w', '_wt', '_wt_w', '_w+t']
     damping = 0.85
 
-    main(dataset, part, vec_type, sep_vec_type, shi_topic, damping)
+    for ds in datasets:
+        for svt in sub_vec_types:
+            for pt in parts:
+                main(ds, pt, vec_type, ds+svt, damping)
+
+    # dataset = 'KDD'
+    # part = 'GEKEsdc+node'
+
+    # vec_type = 'total'
+    # sub_vec_type = 'WE_t'
+
+    # damping = 0.85
+
+    # main(dataset, part, vec_type, sub_vec_type, damping)
