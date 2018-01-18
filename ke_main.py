@@ -105,8 +105,8 @@ if __name__ == "__main__":
     # './data/embedding/KDD/edge_features'： text, cited, citing,
     # evaluate_extraction('WWW', 'CTR', omega=[2,3,3], phi='1')
 
-    # omega: WWW-113, KDD-233
-    # phi: WWW[95,0,0,5,0,0], KDD[88,0,0,12,0,0]
+    # omega: WWW-111, KDD-313
+    # phi: WWW-95-5, KDD-88-12
     # kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/convert/'
-    evaluate_extraction('WWW', 'CTR', omega=[1,1,3], phi='1')
-    # evaluate_extraction('KDD', 'CTR', omega=[2,3,3], phi='1')
+    evaluate_extraction('WWW', 'CTR', omega=[1,1,1], phi='1')
+    evaluate_extraction('KDD', 'CTR', omega=[3,1,3], phi='1')

@@ -214,7 +214,7 @@ def add_word_attr(filtered_text, edge_features, node_features, vec_dict,
         vec2 = vec_dict.get(edge[1], default_vec)
         distance = euc_distance(vec1, vec2)
         if 'wiki' in part:
-            distance = 1.01 - float(kwargs['wiki_sims'][edge][0])
+            distance = 1 + 1e-10 - float(kwargs['wiki_sims'][edge][0])
         cosine = cosine_sim(vec1, vec2)
         cdistance = 1 - cosine
         ang_distance = math.acos(cosine) / math.pi
@@ -309,18 +309,19 @@ def main(dataset, part, vec_type, sub_vec_type, damping):
 
 if __name__=="__main__":
     datasets = ['WWW', 'KDD']
-    parts = ['war', 'GEKEsd', 'GEKEsc', 'GEKEsdc', 'GEKEsdc+node']
+    # parts = ['war', 'GEKEsd', 'GEKEsc', 'GEKEsdc', 'GEKEsdc+node']
+    parts = ['GEKEsdc+node']
     vec_type = 'total'
-    sub_vec_types = ['_w', '_wt', '_wt_w', '_w+t']
+    sub_vec_types = ['WE_wt']
     damping = 0.85
 
     for ds in datasets:
         for svt in sub_vec_types:
             for pt in parts:
-                main(ds, pt, vec_type, ds+svt, damping)
+                main(ds, pt, vec_type, svt, damping)
 
     # dataset = 'KDD'
-    # part = 'GEKEsdc+node'
+    # part = 'wiki_war'
 
     # vec_type = 'total'
     # sub_vec_type = 'WE_t'
