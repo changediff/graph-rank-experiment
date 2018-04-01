@@ -108,5 +108,5 @@ if __name__ == "__main__":
     # omega: WWW-111, KDD-313
     # phi: WWW-95-5, KDD-88-12
     # kdd_vec_dir = './data/embedding/vec/liuhuan/with_topic/KDD/convert/'
-    evaluate_extraction('WWW', 'CTR', omega=[1,1,1], phi='1')
-    evaluate_extraction('KDD', 'CTR', omega=[3,1,3], phi='1')
+    evaluate_extraction('WWW', 'CTR', omega=[1,1,1], phi='1', ngrams=3)
+    evaluate_extraction('KDD', 'CTR', omega=[3,1,3], phi='1', ngrams=3)

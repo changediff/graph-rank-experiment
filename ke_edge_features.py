@@ -303,7 +303,7 @@ def main(dataset, part, vec_type, sub_vec_type, damping):
         edgefeatures2file(os.path.join(edgefeature_dir, filename), edge_features_new)
 
     method_name = '_'.join([vec_type, sub_vec_type, part, str(damping)])
-    evaluate_extraction(dataset, method_name, omega='-1', phi=phi, damping=damping, alter_node=None)
+    evaluate_extraction(dataset, method_name, omega='-1', phi=phi, damping=damping, alter_node=None, ngrams=3)
 
     print('.......feature_extract_DONE........')
 
@@ -311,7 +311,7 @@ if __name__=="__main__":
     datasets = ['WWW', 'KDD']
     # parts = ['war', 'GEKEsd', 'GEKEsc', 'GEKEsdc', 'GEKEsdc+node']
     parts = ['GEKEsdc+node']
-    vec_type = 'total'
+    vec_type = 'separate'
     sub_vec_types = ['WE_wt']
     damping = 0.85
 
