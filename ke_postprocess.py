@@ -12,9 +12,12 @@ def rm_tags(file_text):
         text_notag = text_notag + ' ' + t[:t.find('_')]
     return text_notag
 
-def get_phrases(pr, graph, abstr_path, file_name, ng=2, pl2=0.6, pl3=0.3):
+def get_phrases(pr, graph, doc_path, ng=2, pl2=0.6, pl3=0.3, with_tag=True):
     """返回一个list：[('large numbers', 0.0442255866192), ('Internet criminal', 0.0440296017801)]"""
-    text = rm_tags(read_file(abstr_path+file_name))
+    if with_tag:
+        text = rm_tags(read_file(doc_path))
+    else:
+        text = read_file(doc_path)
     tokens = word_tokenize(text.lower())
     edges = graph.edge
     phrases = set()
@@ -60,21 +63,3 @@ def get_phrases(pr, graph, abstr_path, file_name, ng=2, pl2=0.6, pl3=0.3):
     # print(sorted_word)
     out_sorted = sorted(sorted_phrases+sorted_word, key=lambda d: d[1], reverse=True)
     return out_sorted
-
-# def read_pr(path):
-#     """pr means pagerank, 存在csv文件中，'word, rank'的形式"""
-#     pr = {}
-#     with open(path) as file:
-#         table = csv.reader(file)
-#         for row in table:
-#             pr[row[0]] = float(row[1])
-#     return pr
-
-# def build_simple_graph(path):
-#     """输入边特征文件路径，输出无权图"""
-#     simple_graph = networkx.Graph()
-#     with open(path) as file:
-#         table = csv.reader(file)
-#         for row in table:
-#             simple_graph.add_edge(row[0], row[1])
-#     return simple_graph
