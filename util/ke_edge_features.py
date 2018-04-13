@@ -5,9 +5,8 @@ import math
 import os
 import numpy as np
 
-from ke_preprocess import read_file, filter_text, normalized_token
-from ke_postprocess import rm_tags
-from ke_main import evaluate_extraction
+from util.text_process import *
+from util.ke_main import evaluate_extraction
 
 def read_vec(path, standard=True):
     """

@@ -1,6 +1,6 @@
 # coding:utf-8
-from ke_preprocess import read_file
-from ke_postprocess import rm_tags
+
+from util.text_process import read_file, rm_tags
 from configparser import ConfigParser
 
 import os

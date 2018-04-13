@@ -1,8 +1,6 @@
 # coding:utf-8
-from ke_preprocess import normalized_token, read_file
-from weighted_pagerank import wpr
-from ke_postprocess import get_phrases
-
+from util.text_process import normalized_token, read_file, get_phrases
+from util.weighted_pagerank import wpr
 import os
 
 def evaluate_extraction(dataset, method_name, ngrams=2, damping=0.85, omega=None, phi=None,
@@ -55,7 +53,8 @@ def evaluate_extraction(dataset, method_name, ngrams=2, damping=0.85, omega=None
         pl3 = 0.3
         if dataset == "WWW":
             pl2 = 0.55
-        keyphrases = get_phrases(pr, graph, abstr_dir, file_name, ng=ngrams, pl2=pl2, pl3=pl3)
+        file = os.path.join(abstr_dir, file_name)
+        keyphrases = get_phrases(pr, graph, file, ng=ngrams, pl2=pl2, pl3=pl3)
         top_phrases = []
         for phrase in keyphrases:
             if phrase[0] not in str(top_phrases):

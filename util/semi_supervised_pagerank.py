@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 
-import weighted_pagerank as wpr
+import util.weighted_pagerank as wpr
 
 def get_trans_matrix(graph):
     P = nx.google_matrix(graph, alpha=1)
