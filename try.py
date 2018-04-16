@@ -1,6 +1,8 @@
 # coding:utf-8
 
-def test():
-    pass
+from nltk import word_tokenize
+from util.text_process import is_word
 
-print(test.__name__)
+l = ['a','a','b','c','d','b']
+
+print(l.index('f'))

@@ -76,7 +76,7 @@ def evaluate_pagerank(dataset, extract_method):
     prcs_micro /= len(names)
     recall_micro /= len(names)
     f1_micro = 2 * prcs_micro * recall_micro / (prcs_micro + recall_micro)
-    print(prcs, recall, f1, mrr)
+    print(dataset, method_name, prcs, recall, f1, mrr)
 
     eval_result = method_name + ',' + dataset + ',' + str(prcs) + ',' + str(recall) + ',' + str(f1) \
                   + ',' + str(mrr) + ',' + str(prcs_micro) + ',' + str(recall_micro) + ',' \

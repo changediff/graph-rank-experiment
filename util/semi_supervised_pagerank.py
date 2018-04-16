@@ -1,6 +1,9 @@
+# coding: utf-8
+
+from util.text_process import normalized_token
+
 import networkx as nx
 import numpy as np
-
 import util.weighted_pagerank as wpr
 
 def get_trans_matrix(graph):
@@ -141,7 +144,7 @@ def semi_supervised_pagerank(edges_features, nodes_features, supervised_info, d=
     omega, phi, miu = init_value(len_omega), init_value(len_phi), init_value(len_miu)
     pi = init_value(len(node_list))
     # 计算初始G值
-    P = getTransMatrix(graph)
+    P = get_trans_matrix(graph)
     pi3 = calc_pi3(node_weight, node_list, pi, P, d) # 去掉了主题模型word_prob_m
     G = calc_G(pi, pi3, B, miu, alpha, d) # 初始G
 
@@ -152,12 +155,12 @@ def semi_supervised_pagerank(edges_features, nodes_features, supervised_info, d=
         g_omega = calc_gradient_omega(edge_features, node_list, omega, pi3, pi, alpha, d)
         g_phi = calc_gradient_phi(pi3, node_features, node_list, alpha, d) # 去掉了主题模型word_prob_m
         # 更新变量
-        pi = updateVar(pi, g_pi, step_size)
-        omega = updateVar(omega, g_omega, step_size)
-        phi = updateVar(phi, g_phi, step_size)
+        pi = update_var(pi, g_pi, step_size)
+        omega = update_var(omega, g_omega, step_size)
+        phi = update_var(phi, g_phi, step_size)
         # 使用新的变量更新图
         graph = wpr.build_graph(edges_features, omega)
-        P = getTransMatrix(graph)
+        P = get_trans_matrix(graph)
         pi3 = calc_pi3(node_weight, node_list, pi, P, d) # 去掉了主题模型word_prob_m
         G_next = calc_G(pi, pi3, B, miu, alpha, d) # 初始G
         iter_times += 1

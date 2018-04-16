@@ -4,7 +4,7 @@ import os
 import csv
 
 from os import path
-from util.ke_preprocess import read_file, filter_text
+from util.text_process import read_file, filter_text
 from util.ke_edge_features import read_vec, cosine_sim
 
 def add_lda_prob(filename, filtered_text, ldadir, nodefeatures):

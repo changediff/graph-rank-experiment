@@ -23,7 +23,7 @@ def is_word(token):
     
     This is for filtering out punctuations and numbers.
     """
-    return match(r'^[A-Za-z].+', token)
+    return match(r'^[A-Za-z]+', token)
 
 def is_good_token(tagged_token):
     """
