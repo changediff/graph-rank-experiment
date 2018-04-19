@@ -5,7 +5,7 @@ import re
 import os
 
 from gensim import corpora, models, similarities
-from util.ke_preprocess import filter_text, read_file
+from util.text_process import filter_text, read_file
 
 def get_edge_freq(filtered_text, window=2):
     """

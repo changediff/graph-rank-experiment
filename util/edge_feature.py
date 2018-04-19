@@ -9,16 +9,16 @@ from configparser import ConfigParser
 from gensim import corpora, models, similarities
 from util.text_process import filter_text, read_file
 
-def edge_freq(filtered_text, window=2):
+def get_edge_freq(text_stemmed, window=2):
     """
-    该函数与graph_tools中的不同，待修改合并
-    输出边
-    顺便统计边的共现次数
-    输出格式：{('a', 'b'):[2], ('b', 'c'):[3]}
+    Return a dict, key is edge tuple, value is frequency
+
+    :param text_stemmed: stemmed text of target doc
+    :param window: slide window of word graph
     """
     edges = []
     edge_freq = {}
-    tokens = filtered_text.split()
+    tokens = text_stemmed.split()
     for i in range(0, len(tokens) - window + 1):
         edges += list(itertools.combinations(tokens[i:i+window],2))
     for i in range(len(edges)):
@@ -32,7 +32,10 @@ def edge_freq(filtered_text, window=2):
 
 def docsim(target, context):
     """
-    计算2个文档的相似度，引文共现次数特征需要用到
+    Return similarity of two doc
+
+    :param target: target text
+    :param context: context text
     """
     documents = [context, target]
     texts = [document.lower().split() for document in documents]
@@ -47,10 +50,15 @@ def docsim(target, context):
 
 def single_cite_edge_freq(target, cite_text, window=2):
     """
-    计算单篇引文的共现次数,输入的文本都是filtered的
+    Return a dict, key is edge tuple,
+    value is the citation edge frequency in a citation context.
+
+    :param target: target text, filtered, stemmed
+    :param cite_text: citation text, filtered, stemmed
+    :param window: slide window of word graph
     """
     sim = docsim(target, cite_text)
-    edge_count = edge_freq(cite_text, window=window)
+    edge_count = get_edge_freq(cite_text, window=window)
     edge_sweight = {}
     for edge in edge_count:
         edge_sweight[tuple(sorted(edge))] = sim * edge_count[edge]
@@ -58,8 +66,12 @@ def single_cite_edge_freq(target, cite_text, window=2):
 
 def cite_edge_freq(name, dataset, cite_type):
     """
-    读取文件，计算引用特征
-    data_dir为数据集根目录，如KDD数据集为'./data/embedding/KDD/'
+    Return a dict, key is edge tuple,
+    value is the sum of citation frequency in all citation contexts
+
+    :param name: file name of the target doc
+    :param dataset: dataset name
+    :param cite_type: citation type, citing or cited
     """
     cfg = ConfigParser()
     cfg.read(os.path.join("./config", dataset.lower()+'.ini'))
@@ -74,7 +86,7 @@ def cite_edge_freq(name, dataset, cite_type):
         cite_names = [n for n in os.listdir(cite_dir) if name in n]
     else:
         print('wrong cite type')
-    # 目标文档
+
     target = filter_text(read_file(os.path.join(abstract_dir, name)), with_tag=with_tag)
     cite_edge_freqs = {}
     for cite_name in cite_names:
@@ -84,3 +96,12 @@ def cite_edge_freq(name, dataset, cite_type):
             cite_edge_freqs[key] = cite_edge_freqs.get(key, 0) + cite_edge_freq[key]
     
     return cite_edge_freqs
+
+def srs(freq1, freq2, distance):
+    return freq1 * freq2 / distance
+
+def force(freq1, freq2, distance):
+    return freq1 * freq2 / (distance * distance)
+
+def dice(freq1, freq2, edge_count):
+    return 2 * edge_count / (freq1 + freq2)

@@ -23,7 +23,7 @@ def is_word(token):
     
     This is for filtering out punctuations and numbers.
     """
-    return match(r'^[A-Za-z]+', token)
+    return match(r'^[A-Za-z].+', token)
 
 def is_good_token(tagged_token):
     """
@@ -60,7 +60,9 @@ def filter_text(text, with_tag=True):
 
 ### postprocess ###
 def rm_tags(file_text):
-    """处理输入文本，将已经标注好的POS tagomega去掉，以便使用nltk包处理。"""
+    """
+    remove tags in doc
+    """
     file_splited = file_text.split()
     text_notag = ''
     for t in file_splited:
@@ -68,7 +70,9 @@ def rm_tags(file_text):
     return text_notag
 
 def get_phrases(pr, graph, doc_path, ng=2, pl2=0.6, pl3=0.3, with_tag=True):
-    """返回一个list：[('large numbers', 0.0442255866192), ('Internet criminal', 0.0440296017801)]"""
+    """
+    Return a list as `[('large numbers', 0.233)]`
+    """
     if with_tag:
         text = rm_tags(read_file(doc_path))
     else:
@@ -118,3 +122,12 @@ def get_phrases(pr, graph, doc_path, ng=2, pl2=0.6, pl3=0.3, with_tag=True):
     # print(sorted_word)
     out_sorted = sorted(sorted_phrases+sorted_word, key=lambda d: d[1], reverse=True)
     return out_sorted
+
+def stem_doc(text):
+    """
+    Return stemmed text.
+
+    :param text: text without tags
+    """
+    words_stem = [normalized_token(w) for w in text.split()]
+    return ' '.join(words_stem)

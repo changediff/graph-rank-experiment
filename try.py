@@ -1,8 +1,14 @@
 # coding:utf-8
 
-from nltk import word_tokenize
-from util.text_process import is_word
+import networkx as nx
 
-l = ['a','a','b','c','d','b']
+graph = nx.Graph()
 
-print(l.index('f'))
+edges = [(1,2),(1,3),(2,3),(3,4),(4,1)]
+graph.add_edges_from(edges)
+
+p = {1:1, 2:2, 3:2, 4:3, 5:4, 6:2}
+
+pr = nx.pagerank(graph, personalization=p)
+
+print(pr)

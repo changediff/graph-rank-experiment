@@ -9,9 +9,9 @@ def evaluate_pagerank(dataset, extract_method):
     # read config
 
     method_name = extract_method.__name__
-
+    dataset = dataset.lower()
     cfg = ConfigParser()
-    cfg.read(os.path.join("./config", dataset.lower()+'.ini'))
+    cfg.read(os.path.join("./config", dataset+'.ini'))
 
     filelist = cfg.get('dataset', 'filelist')
     abstract_dir = cfg.get('dataset', 'abstract')

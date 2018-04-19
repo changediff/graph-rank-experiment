@@ -1,6 +1,6 @@
 # coding:utf-8
 from util.text_process import filter_text, read_file, rm_tags
-from util.edge_feature import edge_freq
+from util.edge_feature import get_edge_freq
 from util.node_feature import position_sum
 from util.graph import dict2list, build_graph
 from util.evaluate import evaluate_pagerank
@@ -10,8 +10,10 @@ import os
 import networkx as nx
 
 def positionrank(name, dataset):
+
+    dataset = dataset.lower()
     cfg = ConfigParser()
-    cfg.read(os.path.join("./config", dataset.lower()+'.ini'))
+    cfg.read(os.path.join("./config", dataset+'.ini'))
 
     window = int(cfg.get('graph', 'window'))
     damping = float(cfg.get('graph', 'damping'))
@@ -21,7 +23,7 @@ def positionrank(name, dataset):
     doc_path = os.path.join(abstract_dir, name)
     text = read_file(doc_path)
     candidates = filter_text(text, with_tag=with_tag)
-    edges = dict2list(edge_freq(candidates, window=window))
+    edges = dict2list(get_edge_freq(candidates, window=window))
     graph = build_graph(edges)
     nodes = graph.nodes()
     if with_tag:
@@ -31,6 +33,6 @@ def positionrank(name, dataset):
     return pr, graph
 
 if __name__ == "__main__":
-    datasetlist = ['cikm', 'sigir', 'sigkdd', 'sigmod', 'tkdd', 'tods', 'tois']
+    datasetlist = ['www', 'kdd', 'sigir']
     for d in datasetlist:
         evaluate_pagerank(d, positionrank)
