@@ -91,7 +91,8 @@ def get_phrases(pr, graph, doc_path, ng=2, pl2=0.6, pl3=0.3, with_tag=True):
                 head, tail = normalized_token(ngram[0]), normalized_token(ngram[-1])
                 
                 if head in edges and tail in edges[head] and pos_tag([ngram[-1]])[0][1] != 'JJ':
-                    phrase = ' '.join(list(normalized_token(word) for word in ngram))
+                    # phrase = ' '.join(list(normalized_token(word) for word in ngram))
+                    phrase = ' '.join(ngram)
                     phrases.add(phrase)
 
     if ng == 2:
@@ -107,7 +108,7 @@ def get_phrases(pr, graph, doc_path, ng=2, pl2=0.6, pl3=0.3, with_tag=True):
     for phrase in phrases:
         score = 0
         for word in phrase.split():
-            score += pr.get(word, 0)
+            score += pr.get(normalized_token(word), 0)
         plenth = len(phrase.split())
         if plenth == 1:
             phrase_score[phrase] = score
@@ -117,9 +118,7 @@ def get_phrases(pr, graph, doc_path, ng=2, pl2=0.6, pl3=0.3, with_tag=True):
             phrase_score[phrase] = score * pl3 # 此处根据词组词控制词组分数
         # phrase_score[phrase] = score/len(phrase.split())
     sorted_phrases = sorted(phrase_score.items(), key=lambda d: d[1], reverse=True)
-    # print(sorted_phrases)
     sorted_word = sorted(pr.items(), key=lambda d: d[1], reverse=True)
-    # print(sorted_word)
     out_sorted = sorted(sorted_phrases+sorted_word, key=lambda d: d[1], reverse=True)
     return out_sorted
 

@@ -23,8 +23,8 @@ def kee(name, dataset):
     cfg.read('./config/kee.ini')
     feature_select = cfg.get('kee', 'features')
 
-    text = read_file(os.path.join(abstract_dir, name)
-    text_candidates = filter_text(text), with_tag=with_tag)
+    text = read_file(os.path.join(abstract_dir, name))
+    text_candidates = filter_text(text, with_tag=with_tag)
     edge_freq = get_edge_freq(text_candidates, window=window)
     tf = get_term_freq(text)
     edges = dict2list(edge_weight)

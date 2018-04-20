@@ -36,3 +36,4 @@ if __name__ == "__main__":
     datasetlist = ['www', 'kdd', 'sigir']
     for d in datasetlist:
         evaluate_pagerank(d, positionrank)
+    # evaluate_pagerank('kdd', positionrank)

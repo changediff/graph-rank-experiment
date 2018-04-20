@@ -54,7 +54,7 @@ def evaluate_pagerank(dataset, extract_method):
         standard = read_file(os.path.join(gold_dir, name)).split('\n')
         if standard[-1] == '':
             standard = standard[:-1]
-        standard = list(' '.join(list(normalized_token(w) for w in g.split())) for g in standard)
+        # standard = list(' '.join(list(normalized_token(w) for w in g.split())) for g in standard)
         count_micro = 0
         position = []
         for phrase in top_phrases:
