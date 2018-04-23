@@ -5,8 +5,8 @@ import itertools
 import os
 
 from nltk import word_tokenize, pos_tag
-from ke_preprocess import get_tagged_tokens, is_good_token, normalized_token, read_file
-from ke_edge_features import edgefeatures2file
+from util.text_process import get_tagged_tokens, is_good_token, normalized_token, read_file
+from util.ke_edge_features import edgefeatures2file
 
 def filter_text(text, with_tag=True):
     """

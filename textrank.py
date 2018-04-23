@@ -19,7 +19,7 @@ def textrank(name, dataset):
     abstract_dir = cfg.get('dataset', 'abstract')
     with_tag = cfg.getboolean('dataset', 'with_tag')
     
-    cfg.read('./config/textrank.ini')
+    cfg.read('./config/global.ini')
     use_edge_weight = cfg.getboolean('textrank', 'use_edge_weight')
 
     doc_path = os.path.join(abstract_dir, name)
@@ -30,7 +30,7 @@ def textrank(name, dataset):
         edge_freq = {e:1 for e in edge_freq}
     edges = dict2list(edge_freq)
     graph = build_graph(edges)
-    pr = nx.pagerank(graph, alpha=damping)
+    pr = nx.pagerank_numpy(graph, alpha=damping)
     return pr, graph
 
 if __name__ == "__main__":

@@ -2,6 +2,8 @@
 from nltk import word_tokenize, pos_tag, ngrams
 from nltk.stem import SnowballStemmer
 from re import match
+from configparser import ConfigParser
+
 import os
 
 ### preprocess ###
@@ -28,9 +30,11 @@ def is_word(token):
 def is_good_token(tagged_token):
     """
     A tagged token is good if it starts with a letter and the POS tag is
-    one of ACCEPTED_TAGS.
+    one of ACCEPTED_TAGS in global.ini.
     """
-    ACCEPTED_TAGS = {'NN', 'NNS', 'NNP', 'NNPS', 'JJ'}
+    cfg = ConfigParser()
+    cfg.read('./config/global.ini')
+    ACCEPTED_TAGS = set(str(cfg.get('preprocess', 'accepted_tags')).split())
     return is_word(tagged_token[0]) and tagged_token[1] in ACCEPTED_TAGS
     
 def normalized_token(token):
@@ -130,3 +134,12 @@ def stem_doc(text):
     """
     words_stem = [normalized_token(w) for w in text.split()]
     return ' '.join(words_stem)
+
+def stem2word(text):
+    stem_word = {}
+    tokens = [t for t in word_tokenize(text) if is_good_token(t)]
+    for t in tokens:
+        s = normalized_token(t)
+        if s not in stem_word:
+            stem_word[s] = t
+    return stem_word

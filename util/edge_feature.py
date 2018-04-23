@@ -4,6 +4,8 @@ import itertools
 import csv
 import re
 import os
+import math
+import numpy as np
 
 from configparser import ConfigParser
 from gensim import corpora, models, similarities
@@ -105,3 +107,29 @@ def force(freq1, freq2, distance):
 
 def dice(freq1, freq2, edge_count):
     return 2 * edge_count / (freq1 + freq2)
+
+def cosine_sim(vec1, vec2):
+    """
+    Return cosine similarity of vectors.
+
+    :param vec1: word embedding
+    :param vec2: word embedding
+    """
+    def magnitude(vec):
+        return math.sqrt(np.dot(vec, vec))
+    cosine = np.dot(vec1, vec2) / (magnitude(vec1) * magnitude(vec2) + 1e-10)
+    return cosine
+
+def euc_distance(vec1, vec2):
+    """
+    Return Eucdiean distance of vectors.
+
+    :param vec1: word embedding
+    :param vec2: word embedding
+    """
+    tmp = map(lambda x: abs(x[0]-x[1]), zip(vec1, vec2))
+    distance = math.sqrt(sum(map(lambda x: x*x, tmp)))
+    # distance==0时如何处理？
+    if distance == 0:
+        distance = 0.1
+    return distance

@@ -309,7 +309,7 @@ def main(dataset, part, vec_type, sub_vec_type, damping):
 if __name__=="__main__":
     datasets = ['WWW', 'KDD']
     # parts = ['war', 'GEKEsd', 'GEKEsc', 'GEKEsdc', 'GEKEsdc+node']
-    parts = ['GEKEsdc+node']
+    parts = ['war']
     vec_type = 'separate'
     sub_vec_types = ['WE_wt']
     damping = 0.85
