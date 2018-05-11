@@ -33,7 +33,7 @@ def positionrank(name, dataset):
     return pr, graph
 
 if __name__ == "__main__":
-    datasetlist = ['www', 'kdd', 'sigir']
+    datasetlist = ['kdd', 'sigir']
     for d in datasetlist:
         evaluate_pagerank(d, positionrank)
     # evaluate_pagerank('kdd', positionrank)

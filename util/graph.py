@@ -6,7 +6,10 @@ import numpy as np
 def dict2list(dict):
     output = []
     for key in dict:
-        tmp = list(key)
+        if isinstance(key, str):
+            tmp = [key]
+        else:
+            tmp = list(key)
         tmp.append(dict[key])
         output.append(tmp)
     return output

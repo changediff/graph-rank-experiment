@@ -99,13 +99,13 @@ def cite_edge_freq(name, dataset, cite_type):
     
     return cite_edge_freqs
 
-def srs(freq1, freq2, distance):
+def calc_srs(freq1, freq2, distance):
     return freq1 * freq2 / distance
 
-def force(freq1, freq2, distance):
+def calc_force(freq1, freq2, distance):
     return freq1 * freq2 / (distance * distance)
 
-def dice(freq1, freq2, edge_count):
+def calc_dice(freq1, freq2, edge_count):
     return 2 * edge_count / (freq1 + freq2)
 
 def cosine_sim(vec1, vec2):

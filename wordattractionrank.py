@@ -1,14 +1,16 @@
 # coding:utf-8
-from util.text_process import filter_text, read_file, rm_tags, stem2word
-from util.edge_feature import get_edge_freq, force, dice, euc_distance
-from util.node_feature import read_lda
-from util.graph import dict2list, build_graph
-from util.evaluate import evaluate_pagerank
+import os
 from configparser import ConfigParser
 
-import os
 import gensim
 import networkx as nx
+
+from util.edge_feature import calc_dice, euc_distance, calc_force, get_edge_freq
+from util.evaluate import evaluate_pagerank
+from util.graph import build_graph, dict2list
+from util.node_feature import read_lda
+from util.text_process import filter_text, read_file, rm_tags, stem2word
+
 
 def wordattractionrank(name, dataset):
 
@@ -33,16 +35,16 @@ def wordattractionrank(name, dataset):
     for edge in edge_freq:
         word1 = edge[0]
         word2 = edge[1]
-        vec1 = wvmodel.wv[stemdict[word1]]
-        vec2 = wvmodel.wv[stemdict[word2]]
-        distance = euc_distance(vec1, vec2)
+        try:
+            distance = 1 - wvmodel.similarity(stemdict[word1], stemdict[word2])
+        except:
+            distance = 1
         words = text_candidate.split()
         tf1 = words.count(word1)
         tf2 = words.count(word2)
         cf = edge_freq[edge]
-        distance = euc_distance(vec1, vec2)
-        force = force(tf1, tf2, distance)
-        dice = dice(tf1, tf2, cf)
+        force = calc_force(tf1, tf2, distance)
+        dice = calc_dice(tf1, tf2, cf)
         edge_weight[edge] = force * dice
     edges = dict2list(edge_weight)
     graph = build_graph(edges)
@@ -50,6 +52,6 @@ def wordattractionrank(name, dataset):
     return pr, graph
 
 if __name__ == "__main__":
-    datasetlist = ['www', 'kdd', 'sigir']
+    datasetlist = ['kdd', 'sigir']
     for d in datasetlist:
         evaluate_pagerank(d, wordattractionrank)

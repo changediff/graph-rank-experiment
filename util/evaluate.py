@@ -1,13 +1,26 @@
 # coding: utf-8
 
-from util.text_process import filter_text, read_file, normalized_token, get_phrases
+from util.text_process import filter_text, read_file, normalized_token, get_phrases, get_phrases_new
 from configparser import ConfigParser
 
 import os
+import logging
+import time
 
 def evaluate_pagerank(dataset, extract_method):
-    # read config
 
+    # setup logger
+    logger = logging.getLogger('evaluate')
+    formatter = logging.Formatter('%(message)s')
+    logfilename = '_'.join(time.asctime().replace(':','_').split()) + '.log'
+    file_handler = logging.FileHandler('./log/' + logfilename)
+    file_handler.setFormatter(formatter)
+    # console_handler = logging.StreamHandler(sys.stdout)
+    logger.addHandler(file_handler)
+
+    logger.setLevel(logging.DEBUG)
+
+    # read config
     method_name = extract_method.__name__
     dataset = dataset.lower()
     cfg = ConfigParser()
@@ -37,8 +50,10 @@ def evaluate_pagerank(dataset, extract_method):
     for name in names:
 
         pr, graph = extract_method(name, dataset)
+        # logger.debug(str(pr)) #Python3.6后字典有序，此处未做处理
         doc_path = os.path.join(abstract_dir, name)
         keyphrases = get_phrases(pr, graph, doc_path, ng=ngrams, pl2=weight2, pl3=weight3, with_tag=with_tag)
+        logger.debug(str(keyphrases))
         top_phrases = []
         for phrase in keyphrases:
             if phrase[0] not in str(top_phrases):
@@ -76,11 +91,13 @@ def evaluate_pagerank(dataset, extract_method):
     prcs_micro /= len(names)
     recall_micro /= len(names)
     f1_micro = 2 * prcs_micro * recall_micro / (prcs_micro + recall_micro)
-    print(dataset, method_name, count, prcs, recall, f1, mrr)
+    result_print = (dataset, method_name, count, prcs, recall, f1, mrr)
+    print(str(result_print))
+    logger.info(str(result_print))
 
-    eval_result = method_name + ',' + dataset + ',' + str(prcs) + ',' + str(recall) + ',' + str(f1) \
-                  + ',' + str(mrr) + ',' + str(prcs_micro) + ',' + str(recall_micro) + ',' \
-                  + str(f1_micro) + ',\n'
+    eval_result = method_name + '@' + str(topn) + ',' + dataset + ',' + str(prcs) + ',' \
+                  + str(recall) + ',' + str(f1) + ',' + str(mrr) + ',' + str(prcs_micro) \
+                  + ',' + str(recall_micro) + ',' + str(f1_micro) + ',\n'
     with open(os.path.join('./result', dataset+'.csv'), mode='a', encoding='utf8') as file:
         file.write(eval_result)
     with open(os.path.join('./result', 'all.csv'), mode='a', encoding='utf8') as file:

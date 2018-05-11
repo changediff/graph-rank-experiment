@@ -1,12 +1,13 @@
 # coding:utf-8
 
-import gensim
 import itertools
 import os
+import gensim
 
-from nltk import word_tokenize, pos_tag
-from util.text_process import get_tagged_tokens, is_good_token, normalized_token, read_file
+from nltk import pos_tag, word_tokenize
 from util.ke_edge_features import edgefeatures2file
+from util.text_process import (get_tagged_tokens, is_good_token,
+                               normalized_token, read_file)
 
 def filter_text(text, with_tag=True):
     """

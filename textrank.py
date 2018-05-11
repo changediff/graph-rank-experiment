@@ -34,7 +34,7 @@ def textrank(name, dataset):
     return pr, graph
 
 if __name__ == "__main__":
-    datasetlist = ['www', 'kdd', 'sigir']
-    for d in datasetlist:
-        evaluate_pagerank(d, textrank)
-    # evaluate_pagerank('kdd', textrank)
+    # datasetlist = ['www', 'kdd', 'sigir']
+    # for d in datasetlist:
+    #     evaluate_pagerank(d, textrank)
+    evaluate_pagerank('kdd', textrank)

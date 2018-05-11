@@ -3,10 +3,12 @@
 import csv
 import math
 import os
+
 import numpy as np
 
-from util.text_process import *
 from util.ke_main import evaluate_extraction
+from util.text_process import *
+
 
 def read_vec(path, standard=True):
     """
