@@ -1,11 +1,15 @@
 # coding:utf-8
 
-from nltk import word_tokenize
+import csv
+import os
 from configparser import ConfigParser
 from math import log
-from util.text_process import filter_text, is_word, normalized_token, read_file, stem_doc
 
-import os
+from nltk import word_tokenize
+
+from util.text_process import (filter_text, is_word, normalized_token,
+                               read_file, stem_doc)
+
 
 def position_sum(text, nodes):
     """
@@ -91,3 +95,23 @@ def read_lda(lda_path):
         key, value = line.split()
         lda[key] = float(value)
     return lda
+
+def read_vec(path, standard=True):
+    """
+    also read node
+    read vec: word, 1, 3, 4, ....
+    return word:[1,...] dict
+    """
+    vec_dict = {}
+    with open(path, encoding='utf-8') as file:
+        # 标准csv使用','隔开，有的文件使用空格，所以要改变reader中的delimiter参数
+        if standard:
+            table = csv.reader(file)
+        else:
+            table = csv.reader(file, delimiter=' ')
+        for row in table:
+            try:
+                vec_dict[row[0]] = list(float(i) for i in row[1:])
+            except:
+                continue
+    return vec_dict

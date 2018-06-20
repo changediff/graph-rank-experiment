@@ -1,11 +1,13 @@
 # coding: utf-8
 
-from util.text_process import filter_text, read_file, normalized_token, get_phrases, get_phrases_new
+import logging
+import os
+import time
 from configparser import ConfigParser
 
-import os
-import logging
-import time
+from util.text_process import (filter_text, get_phrases, get_phrases_new,
+                               normalized_token, read_file)
+
 
 def evaluate_pagerank(dataset, extract_method):
 

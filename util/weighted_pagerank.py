@@ -1,6 +1,11 @@
+import csv
+import getopt
+import math
+import sys
+
 import networkx as nx
 import numpy as np
-import csv, sys, getopt, math
+
 
 def read_nodes_features(path):
     """从csv文件中读取特征"""
@@ -24,26 +29,7 @@ def read_edges_features(path):
 # calc_weight需要仔细考虑如何实现，需要做功能拆分吗？
 def calc_weight(features, parameters):
     """利用特征和参数计算权重，暂采用简单的线性加和"""
-    if parameters == '1':
-        return 1
-    elif parameters == '-1':
-        return features[-1]
-    elif parameters == 'max':
-        return max(features)
-    elif (parameters == 'multiply' or
-          parameters == '*'):
-        weight = 1
-        for f in features:
-            weight *= f + 1
-        return weight
-    elif parameters == 'ctr':
-        return sum(features[:3])
-    elif parameters == 'tfidf':
-        return features[0]
-    elif parameters == 'sum':
-        return sum(features)
-    else:
-        return np.dot(features, parameters)
+    return float(np.dot(features, parameters))
 
 def build_graph(edges_features, omega):
     """建图"""

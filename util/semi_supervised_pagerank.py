@@ -15,7 +15,10 @@ def calc_pi3(node_weight, node_list, pi, P, d, word_prob_m=1):
     r is the reset probability vector, pi3 is an important vertor for later use
     node_list = list(graph.node)
     """
+    # print('-----------------------------------------------')
     r = []
+    # print(node_weight)
+    # print(node_list)
     for node in node_list:
         r.append(node_weight[node])
     r = np.matrix(r)
@@ -128,25 +131,32 @@ def create_B(node_list, gold):
         B = [0] * n
     return np.matrix(B)
 
-def semi_supervised_pagerank(edges_features, nodes_features, supervised_info, d=0.85, alpha=0.5, step_size=0.01, max_iter=1000):
+def calc_nodeweight(node_list, node_features, phi):
+    node_weight = {}
+    for node in node_list:
+        feature = node_features[node]
+        node_weight[node] = wpr.calc_weight(feature, phi)
+    return node_weight
+
+def semi_supervised_pagerank(edge_features, node_features, supervised_info, 
+                             d=0.85, alpha=0.5, step_size=0.01, max_iter=1000, epsilon=0.001):
     """
     supervised_info 
     """
 
-    graph = wpr.build_graph(edges_features, omega)
+    len_omega = len(list(edge_features.values())[0])
+    len_phi = len(list(node_features.values())[0])
+    omega, phi = init_value(len_omega), init_value(len_phi)
+    graph = wpr.build_graph(edge_features, omega)
     node_list = list(graph.node)
     B = create_B(node_list, supervised_info)
-
-    len_omega = len(list(edges_features.values())[0])
-    len_phi = len(list(nodes_features.values())[0])
     len_miu = len(B)
-    # 初始化输入量
-    omega, phi, miu = init_value(len_omega), init_value(len_phi), init_value(len_miu)
+    miu = init_value(len_miu)
     pi = init_value(len(node_list))
-    # 计算初始G值
     P = get_trans_matrix(graph)
-    pi3 = calc_pi3(node_weight, node_list, pi, P, d) # 去掉了主题模型word_prob_m
-    G = calc_G(pi, pi3, B, miu, alpha, d) # 初始G
+    node_weight = calc_nodeweight(node_list, node_features, phi)
+    pi3 = calc_pi3(node_weight, node_list, pi, P, d) # remove word_prob_m(topic model)
+    G = calc_G(pi, pi3, B, miu, alpha, d)
 
     iter_times = 0
     while True:
@@ -159,8 +169,9 @@ def semi_supervised_pagerank(edges_features, nodes_features, supervised_info, d=
         omega = update_var(omega, g_omega, step_size)
         phi = update_var(phi, g_phi, step_size)
         # 使用新的变量更新图
-        graph = wpr.build_graph(edges_features, omega)
+        graph = wpr.build_graph(edge_features, omega)
         P = get_trans_matrix(graph)
+        node_weight = calc_nodeweight(node_list, node_features, phi)
         pi3 = calc_pi3(node_weight, node_list, pi, P, d) # 去掉了主题模型word_prob_m
         G_next = calc_G(pi, pi3, B, miu, alpha, d) # 初始G
         iter_times += 1
@@ -171,5 +182,5 @@ def semi_supervised_pagerank(edges_features, nodes_features, supervised_info, d=
             break
     return pi.T.tolist()[0], omega.T.tolist()[0], phi.T.tolist()[0], node_list, iter_times, graph
 
-def ssp():
+def ssp(dataset):
     pass

@@ -1,15 +1,17 @@
 # coding:utf-8
 
-import itertools
 import csv
-import re
-import os
+import itertools
 import math
-import numpy as np
-
+import os
+import re
 from configparser import ConfigParser
+
+import numpy as np
 from gensim import corpora, models, similarities
+
 from util.text_process import filter_text, read_file
+
 
 def get_edge_freq(text_stemmed, window=2):
     """
@@ -133,3 +135,15 @@ def euc_distance(vec1, vec2):
     if distance == 0:
         distance = 0.1
     return distance
+
+def read_edges(path):
+    """
+    read csv edge features
+    return a (node1, node2):[features] dict
+    """
+    edges = {}
+    with open(path, encoding='utf-8') as file:
+        table = csv.reader(file)
+        for row in table:
+            edges[(row[0], row[1])] = [float(i) for i in row[2:]]
+    return edges

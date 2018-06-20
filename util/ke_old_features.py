@@ -171,13 +171,13 @@ def main(dataset, window):
         citing_edge_freq = sum_cite_edge_freq(file_name, data_dir, 'citing', window=window)
         save_edge_features(file_name, data_dir, edge_freq, cited_edge_freq, citing_edge_freq)
 
-        # # 读取点的特征，保存为需要的格式
-        # node_list = filtered_text.split()
-        # raw_node_features = read_file(os.path.join(data_dir, 'raw_node_features'))
-        # node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='07') #023789 07
-        # save_node_features(file_name, data_dir, node_features)
+        # 读取点的特征，保存为需要的格式
+        node_list = filtered_text.split()
+        raw_node_features = read_file(os.path.join(data_dir, 'raw_node_features'))
+        node_features = read_node_features(node_list, raw_node_features, file_name, nfselect='07') #023789 07
+        save_node_features(file_name, data_dir, node_features)
     print('.......old_features_DONE........')
 
 if __name__ == "__main__":
-    main('WWW', 5)
-    # main('KDD', 3)
+    # main('WWW', 5)
+    main('KDD', 2)
